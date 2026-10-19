@@ -62,7 +62,7 @@ describe("ThreadsAdapter", () => {
   it("sends the token as a bearer header, never in the query string", async () => {
     const f = mockFetch(() => ({ body: fx("user_insights.json") }));
     await adapter.accountMetrics();
-    const [url, init] = f.mock.calls[0] as [string, RequestInit];
+    const [url, init] = f.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).not.toContain("TOKEN");
     expect((init.headers as Record<string, string>)["Authorization"]).toBe("Bearer TOKEN");
   });
