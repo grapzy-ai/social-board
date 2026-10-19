@@ -54,10 +54,18 @@ export async function POST(req: Request) {
 
   // digest of new signals (last 24h) → bot
   const fresh = await db.select().from(signals).where(and(eq(signals.status, "new"), gte(signals.createdAt, new Date(now.getTime() - 86_400_000))));
+  let signalsSent = 0;
   if (fresh.length) {
-    const lines = fresh.map((s) => `• ${SIGNAL_TEXT[s.type] ?? s.type}${s.accountId ? ` (${accs.find((a) => a.id === s.accountId)?.handle ?? s.accountId.slice(0, 8)})` : ""}`);
-    await notifyAll(`Social Board — сигналы за сутки:\n${lines.join("\n")}`);
-    await db.update(signals).set({ status: "sent" }).where(inArray(signals.id, fresh.map((s) => s.id)));
+    const sigAccountIds = [...new Set(fresh.map((s) => s.accountId).filter((x): x is string => !!x))];
+    const sigAccs = sigAccountIds.length ? await db.select({ id: accounts.id, handle: accounts.handle }).from(accounts).where(inArray(accounts.id, sigAccountIds)) : [];
+    const handle = (id: string) => sigAccs.find((a) => a.id === id)?.handle ?? id.slice(0, 8);
+    const lines = fresh.map((s) => `• ${SIGNAL_TEXT[s.type] ?? s.type}${s.accountId ? ` (${handle(s.accountId)})` : ""}`);
+    const { delivered } = await notifyAll(`Social Board — сигналы за сутки:\n${lines.join("\n")}`);
+    // Only a delivered digest counts: undelivered signals stay `new` and are retried next run.
+    if (delivered > 0) {
+      await db.update(signals).set({ status: "sent" }).where(inArray(signals.id, fresh.map((s) => s.id)));
+      signalsSent = fresh.length;
+    }
   }
-  return Response.json({ updated, signalsSent: fresh.length });
+  return Response.json({ updated, signalsSent });
 }

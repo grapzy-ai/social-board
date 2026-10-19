@@ -52,7 +52,38 @@ def normalize_message(msg: Any, channel_username: str) -> Optional[dict]:
         "reactions": _reactions_total(getattr(msg, "reactions", None)),
         "permalink": f"https://t.me/{channel_username}/{msg.id}",
         "has_media": getattr(msg, "media", None) is not None,
+        "grouped_id": getattr(msg, "grouped_id", None),
     }
+
+
+def merge_albums(rows: list[dict]) -> list[dict]:
+    """Collapse album messages (same grouped_id) into one post keyed by the first (lowest-id) message.
+
+    Telegram reports the same view count on every album item and attaches the caption/reactions to one of them,
+    so views/forwards take the max and reactions/text are folded in. Non-album rows pass through unchanged.
+    """
+    by_group: dict[int, dict] = {}
+    out: list[dict] = []
+    for r in rows:
+        gid = r.get("grouped_id")
+        if gid is None:
+            out.append(r)
+            continue
+        cur = by_group.get(gid)
+        if cur is None:
+            by_group[gid] = dict(r)
+            out.append(by_group[gid])
+            continue
+        if int(r["external_id"]) < int(cur["external_id"]):
+            cur["external_id"] = r["external_id"]
+            cur["published_at"] = r["published_at"]
+            cur["permalink"] = r["permalink"]
+        cur["text"] = cur["text"] or r["text"]
+        cur["views"] = max(cur["views"], r["views"])
+        cur["forwards"] = max(cur["forwards"], r["forwards"])
+        cur["reactions"] = cur["reactions"] + r["reactions"]
+        cur["has_media"] = cur["has_media"] or r["has_media"]
+    return out
 
 
 def normalize_channel(full: Any) -> dict:

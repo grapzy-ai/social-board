@@ -2,7 +2,7 @@ import { and, desc, eq, gte, inArray, lte, type SQL } from "drizzle-orm";
 import { accounts, posts, postMetricsSnapshots, type Label, type Platform, type PostFormat } from "@/lib/db/schema";
 import type { AnyDb } from "@/lib/db/types";
 import { latestBenchmarks } from "@/lib/metrics/recompute-benchmarks";
-import { multiplier, snapshotForDay } from "@/lib/metrics/multiplier";
+import { multiplier, pickMultiplierSnapshot } from "@/lib/metrics/multiplier";
 
 export interface PostFilter {
   accountId?: string;
@@ -62,7 +62,7 @@ export async function listPosts(db: AnyDb, filter: PostFilter, sort: PostSort): 
 
   const rows: PostRow[] = base.map(({ post, platform, handle }) => {
     const ps = byPost.get(post.id) ?? [];
-    const d11 = snapshotForDay(ps);
+    const { snap: d11, provisional: snapProvisional } = pickMultiplierSnapshot(ps);
     const latest = ps.reduce<(typeof ps)[number] | null>((a, b) => (a === null || b.dayIndex > a.dayIndex ? b : a), null);
     const b = bench.get(`${post.accountId}:${post.format}`);
     const benchmark = b?.medianViews ?? null;
@@ -80,7 +80,7 @@ export async function listPosts(db: AnyDb, filter: PostFilter, sort: PostSort): 
       day11Views: d11?.views ?? null,
       day11Index: d11?.dayIndex ?? null,
       benchmark,
-      benchmarkProvisional: b?.provisional ?? false,
+      benchmarkProvisional: (b?.provisional ?? false) || snapProvisional,
       multiplier: multiplier(d11?.views ?? null, benchmark),
       label: post.label,
       comments: latest?.comments ?? null,

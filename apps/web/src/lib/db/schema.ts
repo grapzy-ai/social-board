@@ -185,7 +185,7 @@ export const syncRuns = pgTable("sync_runs", {
   accountId: uuid("account_id").references(() => accounts.id, { onDelete: "cascade" }),
   startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
   finishedAt: timestamp("finished_at", { withTimezone: true }),
-  status: text("status", { enum: ["ok", "error"] }).notNull(),
+  status: text("status", { enum: ["ok", "partial", "error"] }).notNull(),
   postsUpserted: integer("posts_upserted").notNull().default(0),
   snapshotsWritten: integer("snapshots_written").notNull().default(0),
   error: text("error"),

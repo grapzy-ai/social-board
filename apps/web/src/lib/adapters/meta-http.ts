@@ -13,15 +13,25 @@ export class MetaApiError extends Error {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/** Meta application/user throttling codes (Graph API error codes). */
+export const META_THROTTLE_CODES = new Set([4, 17, 32, 613, ...Array.from({ length: 14 }, (_, i) => 80001 + i)]);
+
+export function isRetryableMetaError(e: MetaApiError): boolean {
+  if (e.isAuth) return false;
+  if (e.status === 429 || e.status >= 500) return true;
+  return e.code !== undefined && META_THROTTLE_CODES.has(e.code);
+}
+
 export interface FetchOptions {
   token?: string;
   retries?: number;
+  backoffMs?: number;
   init?: RequestInit;
 }
 
-/** JSON GET/POST against Meta Graph-style APIs. 429/5xx retried with backoff; auth errors thrown immediately. */
+/** JSON GET/POST against Meta Graph-style APIs. 429/5xx and Meta throttle codes retried with backoff; auth errors thrown immediately. */
 export async function fetchJson<T>(url: string, opts: FetchOptions = {}): Promise<T> {
-  const { token, retries = 3, init = {} } = opts;
+  const { token, retries = 3, backoffMs = 500, init = {} } = opts;
   const headers: Record<string, string> = { Accept: "application/json", ...(init.headers as Record<string, string> | undefined) };
   if (token) headers["Authorization"] = `Bearer ${token}`;
   let attempt = 0;
@@ -36,9 +46,8 @@ export async function fetchJson<T>(url: string, opts: FetchOptions = {}): Promis
     if (res.ok) return body as T;
     const err = (body as { error?: { message?: string; code?: number } } | null)?.error;
     const apiErr = new MetaApiError(err?.message ?? `HTTP ${res.status}`, res.status, err?.code);
-    const retryable = !apiErr.isAuth && (res.status === 429 || res.status >= 500);
-    if (!retryable || attempt >= retries) throw apiErr;
-    await sleep(500 * 2 ** attempt);
+    if (!isRetryableMetaError(apiErr) || attempt >= retries) throw apiErr;
+    await sleep(backoffMs * 2 ** attempt);
     attempt += 1;
   }
 }

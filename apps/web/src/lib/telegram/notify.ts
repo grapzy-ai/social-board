@@ -18,6 +18,14 @@ export function reportChatIds(): string[] {
   return (process.env.TG_REPORT_CHAT_IDS ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 }
 
-export async function notifyAll(text: string): Promise<void> {
-  await Promise.all(reportChatIds().map((id) => sendBotMessage(id, text)));
+export interface NotifyResult {
+  delivered: number;
+  failed: number;
+}
+
+/** Sends to every report chat; counts successes so callers can decide whether the message really went out. */
+export async function notifyAll(text: string): Promise<NotifyResult> {
+  const results = await Promise.all(reportChatIds().map((id) => sendBotMessage(id, text)));
+  const delivered = results.filter(Boolean).length;
+  return { delivered, failed: results.length - delivered };
 }

@@ -98,3 +98,45 @@ describe("runSync", () => {
     expect(runs.map((x) => x.status)).toEqual(["ok", "error"]);
   });
 });
+
+describe("runSync resilience", () => {
+  let db: TestDb;
+  let accountId: string;
+  beforeEach(async () => {
+    ({ db } = await makeTestDb());
+    const [a] = await db.insert(accounts).values({ platform: "instagram", handle: "x", externalUserId: "ig1", tokenEnc: encryptToken("tok") }).returning();
+    accountId = a.id;
+  });
+
+  it("keeps other posts when one post's metrics fail with a non-auth error and reports a partial run", async () => {
+    const adapter = new FakeAdapter(twoPosts);
+    adapter.postMetrics = async (id: string) => {
+      if (id === "p1") throw new MetaApiError("(#100) Unsupported get request", 400, 100);
+      return { ...EMPTY_METRICS, views: 2000 };
+    };
+    const r = await runSync(accountId, { db, now: NOW, adapter });
+    expect(r.status).toBe("partial");
+    expect(r.postsUpserted).toBe(2);
+    expect(r.snapshotsWritten).toBe(1);
+    expect(r.error).toContain("p1");
+    expect(await db.select().from(posts)).toHaveLength(2);
+    const daily = await db.select().from(accountMetricsDaily);
+    expect(daily).toHaveLength(1);
+  });
+
+  it("writes a first-seen snapshot for a post discovered between snapshot days", async () => {
+    const stale: NormalizedPost[] = [{ externalId: "old", format: "reel", publishedAt: daysAgo(20), text: "o", mediaUrl: null, permalink: null }];
+    const r = await runSync(accountId, { db, now: NOW, adapter: new FakeAdapter(stale) });
+    expect(r.snapshotsWritten).toBe(1);
+    const snaps = await db.select().from(postMetricsSnapshots);
+    expect(snaps[0].dayIndex).toBe(20);
+    const again = await runSync(accountId, { db, now: NOW, adapter: new FakeAdapter(stale) });
+    expect(again.snapshotsWritten).toBe(0);
+  });
+
+  it("raises a sync_failing signal after three consecutive error runs", async () => {
+    for (let i = 0; i < 3; i++) await runSync(accountId, { db, now: NOW, adapter: new FakeAdapter([], true) });
+    const sig = await db.select().from(signals);
+    expect(sig.filter((s) => s.type === "sync_failing")).toHaveLength(1);
+  });
+});

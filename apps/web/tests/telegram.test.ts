@@ -20,3 +20,15 @@ describe("sendBotMessage", () => {
     expect(await sendBotMessage("42", "x")).toBe(false);
   });
 });
+
+describe("notifyAll", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  it("reports how many chats were delivered to", async () => {
+    const { notifyAll } = await import("@/lib/telegram/notify");
+    process.env.TG_BOT_TOKEN = "t";
+    process.env.TG_REPORT_CHAT_IDS = "1,2";
+    let n = 0;
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("{}", { status: ++n === 1 ? 200 : 500 })));
+    expect(await notifyAll("x")).toEqual({ delivered: 1, failed: 1 });
+  });
+});

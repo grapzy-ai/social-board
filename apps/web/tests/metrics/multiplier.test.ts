@@ -29,3 +29,15 @@ describe("multiplier", () => {
     expect(multiplier(100, 0)).toBeNull();
   });
 });
+
+describe("pickMultiplierSnapshot", () => {
+  it("prefers the latest snapshot at or before day 11 (not provisional)", async () => {
+    const { pickMultiplierSnapshot } = await import("@/lib/metrics/multiplier");
+    expect(pickMultiplierSnapshot([{ dayIndex: 7, views: 5 }, { dayIndex: 30, views: 9 }])).toEqual({ snap: { dayIndex: 7, views: 5 }, provisional: false });
+  });
+  it("falls back to the earliest later snapshot and marks it provisional", async () => {
+    const { pickMultiplierSnapshot } = await import("@/lib/metrics/multiplier");
+    expect(pickMultiplierSnapshot([{ dayIndex: 30, views: 9 }, { dayIndex: 20, views: 7 }])).toEqual({ snap: { dayIndex: 20, views: 7 }, provisional: true });
+    expect(pickMultiplierSnapshot([])).toEqual({ snap: null, provisional: false });
+  });
+});

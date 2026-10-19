@@ -8,7 +8,7 @@ from telethon import TelegramClient
 from telethon.tl.functions.channels import GetFullChannelRequest
 from telethon.tl.functions.stats import GetBroadcastStatsRequest
 
-from .normalize import chisinau_date, day_index, normalize_channel, normalize_message, should_snapshot
+from .normalize import chisinau_date, day_index, merge_albums, normalize_channel, normalize_message, should_snapshot
 from .sink import Sink
 
 LOOKBACK_DAYS = 90
@@ -48,6 +48,7 @@ async def collect_once(client: TelegramClient, channel: str, account_id: str, si
         row = normalize_message(msg, username)
         if row:
             rows.append(row)
+    rows = merge_albums(rows)
 
     ids = sink.upsert_posts(account_id, rows, language=language)
     existing = sink.existing_snapshot_days(list(ids.values()))

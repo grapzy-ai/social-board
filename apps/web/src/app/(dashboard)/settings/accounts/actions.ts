@@ -6,6 +6,7 @@ import { getDb } from "@/lib/db/client";
 import { addAccount } from "@/lib/sync/tokens";
 import { runSync } from "@/lib/sync/run";
 import { goals, PLATFORMS } from "@/lib/db/schema";
+import { requireAllowedUser } from "@/lib/auth/require";
 
 const AddSchema = z.object({
   platform: z.enum(PLATFORMS),
@@ -18,6 +19,7 @@ const AddSchema = z.object({
 });
 
 export async function addAccountAction(formData: FormData) {
+  await requireAllowedUser();
   const input = AddSchema.parse(Object.fromEntries(formData));
   await addAccount(getDb(), {
     platform: input.platform,
@@ -38,6 +40,7 @@ const GoalSchema = z.object({
 });
 
 export async function setGoalAction(formData: FormData) {
+  await requireAllowedUser();
   const input = GoalSchema.parse(Object.fromEntries(formData));
   const db = getDb();
   await db
@@ -49,6 +52,7 @@ export async function setGoalAction(formData: FormData) {
 }
 
 export async function syncNowAction(formData: FormData) {
+  await requireAllowedUser();
   const accountId = z.string().uuid().parse(formData.get("accountId"));
   await runSync(accountId, { db: getDb() });
   revalidatePath("/settings/accounts");

@@ -56,3 +56,19 @@ def test_snapshot_rules_match_web():
     assert should_snapshot(37, [30]) is True
     assert should_snapshot(36, [30]) is False
     assert should_snapshot(2, [1]) is False
+
+
+def test_album_messages_collapse_into_one_post_keyed_by_first_message():
+    from tg.normalize import merge_albums
+
+    a1 = normalize_message(_msg(id=100, grouped_id=7, media=object(), message="Альбом", views=900, forwards=3, reactions=NS(results=[NS(count=10)])), "c")
+    a2 = normalize_message(_msg(id=101, grouped_id=7, media=object(), message=None, views=905, forwards=3, reactions=None), "c")
+    single = normalize_message(_msg(id=102, grouped_id=None), "c")
+    merged = merge_albums([a2, a1, single])  # iter_messages yields newest first
+    assert [r["external_id"] for r in merged] == ["100", "102"]
+    album = merged[0]
+    assert album["text"] == "Альбом"
+    assert album["views"] == 905
+    assert album["reactions"] == 10
+    assert album["permalink"] == "https://t.me/c/100"
+    assert album["has_media"] is True
