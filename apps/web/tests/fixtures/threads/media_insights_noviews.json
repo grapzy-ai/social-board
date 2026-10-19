@@ -1,0 +1,6 @@
+{"data": [
+  {"name": "likes", "period": "lifetime", "values": [{"value": 5}], "title": "Likes", "id": "1002/insights/likes/lifetime"},
+  {"name": "replies", "period": "lifetime", "values": [{"value": 1}], "title": "Replies", "id": "1002/insights/replies/lifetime"},
+  {"name": "reposts", "period": "lifetime", "values": [{"value": 0}], "title": "Reposts", "id": "1002/insights/reposts/lifetime"},
+  {"name": "quotes", "period": "lifetime", "values": [{"value": 0}], "title": "Quotes", "id": "1002/insights/quotes/lifetime"}
+]}
