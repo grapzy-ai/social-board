@@ -1,9 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  // Dashboard is fully dynamic (per-request DB reads); cacheComponents is off so route segment config (runtime/maxDuration/dynamic) applies.
   turbopack: {
     rules: {
       "*.css": {
