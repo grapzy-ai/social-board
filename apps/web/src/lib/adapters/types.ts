@@ -34,7 +34,7 @@ export interface TokenRefresh {
 
 export interface Adapter {
   listPosts(since: Date): Promise<NormalizedPost[]>;
-  postMetrics(externalId: string): Promise<NormalizedPostMetrics>;
+  postMetrics(externalId: string, format?: PostFormat): Promise<NormalizedPostMetrics>;
   accountMetrics(): Promise<NormalizedAccountMetrics>;
   refreshToken(): Promise<TokenRefresh>;
 }

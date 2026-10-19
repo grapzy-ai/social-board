@@ -1,0 +1,5 @@
+{"data": [
+  {"id": "9001", "media_type": "VIDEO", "media_product_type": "REELS", "caption": "1200 кампаний — 3 вещи, которые не делаю никогда", "permalink": "https://www.instagram.com/reel/R1/", "timestamp": "2026-10-11T12:00:00+0000", "thumbnail_url": "https://cdn.example/9001.jpg"},
+  {"id": "9002", "media_type": "CAROUSEL_ALBUM", "media_product_type": "FEED", "caption": "Карусель", "permalink": "https://www.instagram.com/p/C1/", "timestamp": "2026-10-13T12:00:00+0000", "media_url": "https://cdn.example/9002.jpg"},
+  {"id": "9003", "media_type": "IMAGE", "media_product_type": "FEED", "caption": "Фото", "permalink": "https://www.instagram.com/p/I1/", "timestamp": "2026-10-14T12:00:00+0000", "media_url": "https://cdn.example/9003.jpg"}
+]}
