@@ -20,7 +20,16 @@ function diffDays(a: string, b: string): number {
   return Math.round((Date.parse(b + "T00:00:00Z") - Date.parse(a + "T00:00:00Z")) / 86_400_000);
 }
 
-const isYmd = (v: string | undefined): v is string => !!v && YMD.test(v) && !Number.isNaN(Date.parse(v + "T00:00:00Z"));
+/** Strict calendar check: the string must round-trip through UTC (rejects 2026-02-31) and be a sane year. */
+const isYmd = (v: string | undefined): v is string => {
+  if (!v || !YMD.test(v)) return false;
+  const [y, m, d] = v.split("-").map(Number);
+  if (y < 1970 || y > 2100) return false;
+  return new Date(Date.UTC(y, m - 1, d)).toISOString().slice(0, 10) === v;
+};
+
+/** Longest custom range (inclusive days); longer requests are clamped from the end. */
+export const MAX_CUSTOM_DAYS = 365;
 
 /**
  * Period from query params. A valid preset wins; else a valid custom range (reversed bounds are swapped,
@@ -35,6 +44,7 @@ export function resolvePeriod(sp: { period?: string; from?: string; to?: string 
     let [from, to] = sp.from <= sp.to ? [sp.from, sp.to] : [sp.to, sp.from];
     if (to > today) to = today;
     if (from > to) from = to;
+    if (diffDays(from, to) + 1 > MAX_CUSTOM_DAYS) from = addDays(to, -(MAX_CUSTOM_DAYS - 1));
     return { days: diffDays(from, to) + 1, from, to, preset: null };
   }
   return { days: 30, from: addDays(today, -29), to: today, preset: 30 };

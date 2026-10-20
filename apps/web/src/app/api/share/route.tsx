@@ -33,7 +33,8 @@ export async function GET(req: Request) {
   if (format !== "square" && format !== "story") return Response.json({ error: "format must be square|story" }, { status: 400 });
   if (theme !== "light" && theme !== "dark") return Response.json({ error: "theme must be light|dark" }, { status: 400 });
 
-  const segment = resolveSegment((await cookies()).get(SEGMENT_COOKIE)?.value);
+  // An explicit seg wins over the cookie so previews can't go stale after a segment switch.
+  const segment = resolveSegment(url.searchParams.get("seg") ?? (await cookies()).get(SEGMENT_COOKIE)?.value);
   const spec = resolvePeriod(Object.fromEntries(url.searchParams), chisinauDate(new Date()));
   const stats = await getShareStats(getDb(), segmentLanguage(segment), spec);
   const { width, height } = SHARE_SIZE[format as ShareFormat];

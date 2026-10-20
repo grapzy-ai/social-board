@@ -15,6 +15,8 @@ import { Delta } from "@/components/ui/Delta";
 import { Multiplier } from "@/components/ui/Multiplier";
 
 export const dynamic = "force-dynamic";
+// «Обновить» runs the segment sync inside this route's server action; give it the cron's budget.
+export const maxDuration = 300;
 
 const SIGNAL_TEXT: Record<string, string> = {
   token_expired: "токен истёк — нужна повторная авторизация",

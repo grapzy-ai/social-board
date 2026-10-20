@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { resolvePeriod } from "@/lib/ui/period";
 import { resolveTheme, THEME_COOKIE } from "@/lib/ui/theme";
+import { resolveSegment, SEGMENT_COOKIE } from "@/lib/ui/segment";
 import { chisinauDate } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
@@ -9,10 +10,12 @@ export const dynamic = "force-dynamic";
 export default async function SharePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const sp = await searchParams;
   const spec = resolvePeriod(sp, chisinauDate(new Date()));
-  const uiTheme = resolveTheme((await cookies()).get(THEME_COOKIE)?.value);
+  const jar = await cookies();
+  const uiTheme = resolveTheme(jar.get(THEME_COOKIE)?.value);
+  const segment = resolveSegment(jar.get(SEGMENT_COOKIE)?.value);
   const cardTheme = sp.card === "dark" || sp.card === "light" ? sp.card : uiTheme === "dark" ? "dark" : "light";
   const periodQs = spec.preset ? `period=${spec.preset}` : `from=${spec.from}&to=${spec.to}`;
-  const img = (format: "square" | "story") => `/api/share?format=${format}&theme=${cardTheme}&${periodQs}`;
+  const img = (format: "square" | "story") => `/api/share?format=${format}&theme=${cardTheme}&seg=${segment}&${periodQs}`;
   const pageQs = (card: "light" | "dark") => `/share?${periodQs}&card=${card}`;
 
   return (

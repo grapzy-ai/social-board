@@ -12,4 +12,3 @@ coverage
 # local visual harness
 apps/web/.env.local
 apps/web/.env.development.local
-apps/web/AGENTS.md

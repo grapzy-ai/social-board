@@ -2,6 +2,7 @@ import { and, eq, gte, inArray, lte } from "drizzle-orm";
 import { accounts, accountMetricsDaily, posts, postMetricsSnapshots } from "@/lib/db/schema";
 import type { AnyDb } from "@/lib/db/types";
 import type { PeriodSpec } from "@/lib/ui/period";
+import { chisinauDayBounds } from "@/lib/time";
 import { computeShare, type ShareStats } from "./compute";
 
 export const SHARE_HANDLE: Record<"ru" | "en" | "all", string> = { ru: "vadimbordian", en: "vadim.bordian", all: "vadim.bordian" };
@@ -25,7 +26,7 @@ export async function getShareStats(db: AnyDb, language: "ru" | "en" | undefined
     .select({ accountId: posts.accountId, postId: posts.id, dayIndex: postMetricsSnapshots.dayIndex, views: postMetricsSnapshots.views })
     .from(posts)
     .innerJoin(postMetricsSnapshots, eq(postMetricsSnapshots.postId, posts.id))
-    .where(and(inArray(posts.accountId, ids), gte(posts.publishedAt, new Date(spec.from + "T00:00:00+03:00")), lte(posts.publishedAt, new Date(spec.to + "T23:59:59+03:00"))));
+    .where(and(inArray(posts.accountId, ids), gte(posts.publishedAt, chisinauDayBounds(spec.from).start), lte(posts.publishedAt, chisinauDayBounds(spec.to).end)));
   const latest = new Map<string, { accountId: string; dayIndex: number; views: number | null }>();
   for (const s of snaps) {
     const cur = latest.get(s.postId);

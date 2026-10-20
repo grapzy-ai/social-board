@@ -54,3 +54,18 @@ describe("share card", () => {
     expect(buf.subarray(1, 4).toString()).toBe("PNG");
   }, 30000);
 });
+
+describe("share card negatives and segment param", () => {
+  it("renders a decline honestly: no '+-' and no green up-arrow", () => {
+    const neg = { ...fixture, totalDelta: -12, totalPct: -12, perPlatform: [{ ...fixture.perPlatform[0], delta: -12, pct: -12 }] };
+    const html = renderToStaticMarkup(shareCard(neg, { format: "square", theme: "light" }));
+    expect(html).not.toContain("+-");
+    expect(html).toContain("−12");
+    expect(html).toContain("↘");
+    expect(html).not.toContain("↗");
+  });
+  it("separates stacked layers with a surface-coloured stroke", () => {
+    const html = renderToStaticMarkup(shareCard(fixture, { format: "square", theme: "light" }));
+    expect(html).toContain('stroke="#fcfcfb"');
+  });
+});

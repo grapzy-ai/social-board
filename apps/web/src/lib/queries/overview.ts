@@ -3,7 +3,7 @@ import { accounts, accountMetricsDaily, goals, posts, postMetricsSnapshots, sign
 import { latestBenchmarks } from "@/lib/metrics/recompute-benchmarks";
 import { multiplier, pickMultiplierSnapshot } from "@/lib/metrics/multiplier";
 import type { AnyDb } from "@/lib/db/types";
-import { chisinauDate } from "@/lib/time";
+import { chisinauDate, chisinauDayBounds } from "@/lib/time";
 import type { PeriodSpec } from "@/lib/ui/period";
 
 
@@ -93,8 +93,8 @@ export async function getOverview(db: AnyDb, period: PeriodSpec, now = new Date(
   const goalRows = await db.select().from(goals).where(and(inArray(goals.accountId, ids), eq(goals.month, monthStart), eq(goals.metric, "followers")));
 
   // posts published inside the period (Chisinau calendar days → UTC bounds are approximate by design)
-  const since = new Date(periodStart + "T00:00:00+03:00");
-  const until = new Date(periodEnd + "T23:59:59+03:00");
+  const since = chisinauDayBounds(periodStart).start;
+  const until = chisinauDayBounds(periodEnd).end;
   const snapRows = await db
     .select({
       accountId: posts.accountId,

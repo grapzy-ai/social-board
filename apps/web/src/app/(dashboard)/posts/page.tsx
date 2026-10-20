@@ -6,7 +6,7 @@ import { accounts, POST_FORMATS, type Label, type PostFormat } from "@/lib/db/sc
 import { listPosts, type PostSort } from "@/lib/queries/posts";
 import { resolveSegment, segmentLanguage, SEGMENT_COOKIE } from "@/lib/ui/segment";
 import { resolvePeriod } from "@/lib/ui/period";
-import { chisinauDate, dayIndex } from "@/lib/time";
+import { chisinauDate, chisinauDayBounds, dayIndex } from "@/lib/time";
 import { accountColor, fmtInt, FORMAT_GLYPH, FORMAT_TEXT, PLATFORM_LABEL } from "@/lib/ui/platform";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { RefreshButton } from "@/components/ui/RefreshButton";
@@ -15,6 +15,8 @@ import { Multiplier } from "@/components/ui/Multiplier";
 import { PlatformChip } from "@/components/ui/PlatformChip";
 
 export const dynamic = "force-dynamic";
+// «Обновить» runs the segment sync inside this route's server action; give it the cron's budget.
+export const maxDuration = 300;
 
 
 export default async function PostsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
@@ -36,7 +38,7 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
   const sort: PostSort = sp.sort === "multiplier" ? "multiplier" : "date";
   const rows = await listPosts(
     db,
-    { accountId, format, label, language, from: new Date(spec.from + "T00:00:00+03:00"), to: new Date(spec.to + "T23:59:59+03:00") },
+    { accountId, format, label, language, from: chisinauDayBounds(spec.from).start, to: chisinauDayBounds(spec.to).end },
     sort,
   );
 

@@ -22,3 +22,17 @@ describe("resolvePeriod", () => {
     expect(resolvePeriod({ period: "12" }, T).preset).toBe(30);
   });
 });
+
+describe("resolvePeriod hardening", () => {
+  const T = "2026-10-20";
+  it("rejects impossible calendar dates instead of rolling them over", () => {
+    expect(resolvePeriod({ from: "2026-02-31", to: "2026-03-02" }, T).preset).toBe(30);
+    expect(resolvePeriod({ from: "0050-01-01", to: T }, T).preset).toBe(30);
+  });
+  it("caps a custom range at 365 days", () => {
+    const r = resolvePeriod({ from: "1990-01-01", to: T }, T);
+    expect(r.days).toBe(365);
+    expect(r.from).toBe("2025-10-21");
+    expect(r.preset).toBeNull();
+  });
+});
