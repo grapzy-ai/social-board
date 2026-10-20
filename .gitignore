@@ -9,3 +9,6 @@ __pycache__
 .venv
 .DS_Store
 coverage
+# local visual harness
+apps/web/.env.local
+apps/web/.env.development.local

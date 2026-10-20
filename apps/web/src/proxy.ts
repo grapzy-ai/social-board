@@ -4,9 +4,13 @@ import { isAllowed } from "@/lib/auth/allowlist";
 
 const PUBLIC_PREFIXES = ["/login", "/api/cron", "/api/health", "/api/auth/callback"];
 
+/** Local visual harness only (scripts/dev-db.mjs): needs an explicit flag and never applies on Vercel. */
+const DEV_BYPASS = process.env.DEV_BYPASS_AUTH === "1" && !process.env.VERCEL && !process.env.VERCEL_ENV;
+
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))) return NextResponse.next();
+  if (DEV_BYPASS) return NextResponse.next();
 
   let res = NextResponse.next({ request: req });
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {

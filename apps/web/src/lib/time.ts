@@ -30,3 +30,24 @@ export function shouldSnapshot(dayIdx: number, existing: readonly number[]): boo
   if ((SNAPSHOT_DAYS as readonly number[]).includes(dayIdx)) return true;
   return dayIdx > 30 && (dayIdx - 30) % 7 === 0;
 }
+
+/** UTC instants bounding one Chisinau calendar day, DST-aware (EET/EEST). */
+export function chisinauDayBounds(ymd: string): { start: Date; end: Date } {
+  const [y, m, d] = ymd.split("-").map(Number);
+  const prev = new Date(Date.UTC(y, m - 1, d - 1)).toISOString().slice(0, 10);
+  // Try both possible offsets; the right one is the instant whose previous millisecond is still the previous day.
+  for (const off of ["+03:00", "+02:00"]) {
+    const start = new Date(`${ymd}T00:00:00.000${off}`);
+    if (chisinauDate(start) === ymd && chisinauDate(new Date(start.getTime() - 1)) === prev) {
+      const next = new Date(Date.UTC(y, m - 1, d + 1)).toISOString().slice(0, 10);
+      let end: Date | null = null;
+      for (const off2 of ["+03:00", "+02:00"]) {
+        const cand = new Date(`${next}T00:00:00.000${off2}`);
+        if (chisinauDate(cand) === next && chisinauDate(new Date(cand.getTime() - 1)) === ymd) end = new Date(cand.getTime() - 1);
+      }
+      return { start, end: end ?? new Date(start.getTime() + 86_400_000 - 1) };
+    }
+  }
+  const start = new Date(`${ymd}T00:00:00.000+03:00`);
+  return { start, end: new Date(start.getTime() + 86_400_000 - 1) };
+}

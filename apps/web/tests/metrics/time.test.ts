@@ -41,3 +41,15 @@ describe("shouldSnapshot", () => {
     expect(shouldSnapshot(0, [])).toBe(false);
   });
 });
+
+describe("chisinauDayBounds", () => {
+  it("uses the real offset on both sides of the October DST change", async () => {
+    const { chisinauDayBounds } = await import("@/lib/time");
+    const summer = chisinauDayBounds("2026-10-20"); // UTC+3
+    expect(summer.start.toISOString()).toBe("2026-10-19T21:00:00.000Z");
+    expect(summer.end.toISOString()).toBe("2026-10-20T20:59:59.999Z");
+    const winter = chisinauDayBounds("2026-10-26"); // UTC+2
+    expect(winter.start.toISOString()).toBe("2026-10-25T22:00:00.000Z");
+    expect(winter.end.toISOString()).toBe("2026-10-26T21:59:59.999Z");
+  });
+});
