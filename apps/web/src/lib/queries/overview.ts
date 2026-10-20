@@ -27,6 +27,7 @@ export interface AccountCard {
 
 export interface PostBrief {
   id: string;
+  accountId: string;
   platform: Platform;
   language: "ru" | "en";
   text: string | null;
@@ -212,7 +213,7 @@ export async function getOverview(db: AnyDb, period: PeriodSpec, now = new Date(
     const { snap } = pickMultiplierSnapshot(snaps);
     const m = multiplier(snap?.views ?? null, bench.get(`${meta.accountId}:${meta.format}`)?.medianViews ?? null);
     if (m === null) continue;
-    ranked.push({ id: postId, platform: acc.platform, language: meta.language, text: meta.text, multiplier: m, views: snap?.views ?? null });
+    ranked.push({ id: postId, accountId: acc.id, platform: acc.platform, language: meta.language, text: meta.text, multiplier: m, views: snap?.views ?? null });
   }
   ranked.sort((a, b) => b.multiplier - a.multiplier);
   const top = ranked.slice(0, 3);
