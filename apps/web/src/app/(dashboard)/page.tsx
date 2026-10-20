@@ -3,7 +3,8 @@ import { cookies } from "next/headers";
 import { getDb } from "@/lib/db/client";
 import { getOverview } from "@/lib/queries/overview";
 import { resolveSegment, segmentLanguage, SEGMENT_COOKIE } from "@/lib/ui/segment";
-import { PERIOD_PRESETS, resolvePeriod } from "@/lib/ui/period";
+import { resolvePeriod } from "@/lib/ui/period";
+import { PageHeader } from "@/components/shell/PageHeader";
 import { chisinauDate } from "@/lib/time";
 import { GrowthChart } from "@/components/charts/GrowthChart";
 import { accountColor, fmtDelta, fmtInt, PLATFORM_LABEL } from "@/lib/ui/platform";
@@ -28,17 +29,8 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   const monthName = new Intl.DateTimeFormat("ru-RU", { month: "long" }).format(new Date());
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Обзор</h1>
-        <div className="flex gap-1 rounded-lg border border-line p-1 text-sm">
-          {PERIOD_PRESETS.map((p) => (
-            <Link key={p} href={`/?period=${p}`} className={`rounded-md px-3 py-1 ${p === spec.preset ? "bg-line text-fg" : "text-muted hover:text-fg"}`}>
-              {p} дней
-            </Link>
-          ))}
-        </div>
-      </div>
+    <div className="space-y-6">
+      <PageHeader title="Обзор" spec={spec} basePath="/" />
 
       <section>
         <h2 className="mb-3 text-sm uppercase tracking-wide text-muted">Цели на {monthName}</h2>

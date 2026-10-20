@@ -8,6 +8,7 @@ import { listPosts, type PostSort } from "@/lib/queries/posts";
 import { LabelButtons } from "@/components/ui/LabelButtons";
 import { Multiplier } from "@/components/ui/Multiplier";
 import { fmtInt, PLATFORM_LABEL } from "@/lib/ui/platform";
+import { PageHeader } from "@/components/shell/PageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -40,13 +41,15 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Посты <span className="text-base font-normal text-muted">{rows.length}</span></h1>
-        <div className="flex gap-1 rounded-lg border border-line p-1 text-sm">
-          <Link href={link({ sort: "date" })} className={`rounded-md px-3 py-1 ${sort === "date" ? "bg-line" : "text-muted"}`}>по дате</Link>
-          <Link href={link({ sort: "multiplier" })} className={`rounded-md px-3 py-1 ${sort === "multiplier" ? "bg-line" : "text-muted"}`}>по множителю</Link>
-        </div>
-      </div>
+      <PageHeader
+        title={<>Посты <span className="text-base font-normal text-muted">{rows.length}</span></>}
+        actions={
+          <div className="flex gap-0.5 rounded-lg border border-line p-0.5 text-xs">
+            <Link href={link({ sort: "date" })} className={`rounded-md px-2.5 py-1 ${sort === "date" ? "bg-fg text-surface" : "text-muted hover:text-fg"}`}>по дате</Link>
+            <Link href={link({ sort: "multiplier" })} className={`rounded-md px-2.5 py-1 ${sort === "multiplier" ? "bg-fg text-surface" : "text-muted hover:text-fg"}`}>по множителю</Link>
+          </div>
+        }
+      />
 
       <div className="flex flex-wrap gap-2">
         <Link href={link({ account: undefined })} className={chip(!accountId)}>все площадки</Link>

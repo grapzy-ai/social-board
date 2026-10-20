@@ -5,6 +5,7 @@ import { getDb } from "@/lib/db/client";
 import { accounts, goals, syncRuns } from "@/lib/db/schema";
 import { addAccountAction, setGoalAction, syncNowAction } from "./actions";
 import { PLATFORM_LABEL } from "@/lib/ui/platform";
+import { PageHeader } from "@/components/shell/PageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -28,12 +29,11 @@ export default async function AccountsSettingsPage({ searchParams }: { searchPar
 
   return (
     <div className="space-y-10">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Аккаунты</h1>
-        <p className="mt-1 text-sm text-muted">Токены хранятся зашифрованными и нигде не показываются.</p>
-        {sp.connected && <p className="mt-2 text-sm text-accent">Подключено: {sp.connected}</p>}
-        {sp.error && <p className="mt-2 text-sm text-red-400">Ошибка: {sp.error}</p>}
-      </header>
+      <div>
+        <PageHeader title="Аккаунты" subtitle="Токены хранятся зашифрованными и нигде не показываются." />
+        {sp.connected && <p className="-mt-3 mb-4 text-sm text-accent">Подключено: {sp.connected}</p>}
+        {sp.error && <p className="-mt-3 mb-4 text-sm text-bad">Ошибка: {sp.error}</p>}
+      </div>
 
       <section className="rounded-xl border border-line p-5">
         <h2 className="mb-4 text-lg font-medium">Подключённые</h2>
