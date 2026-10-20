@@ -1,17 +1,22 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { getDb } from "@/lib/db/client";
-import { getOverview, type Period } from "@/lib/queries/overview";
+import { getOverview } from "@/lib/queries/overview";
+import { resolveSegment, segmentLanguage, SEGMENT_COOKIE } from "@/lib/ui/segment";
+import { PERIOD_PRESETS, resolvePeriod } from "@/lib/ui/period";
+import { chisinauDate } from "@/lib/time";
 import { GrowthChart } from "@/components/charts/GrowthChart";
 import { accountColor, fmtDelta, fmtInt, PLATFORM_LABEL } from "@/lib/ui/platform";
 
 export const dynamic = "force-dynamic";
 
-const PERIODS: Period[] = [7, 30, 90];
-
 export default async function OverviewPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const sp = await searchParams;
-  const period = (PERIODS.includes(Number(sp.period) as Period) ? Number(sp.period) : 30) as Period;
-  const o = await getOverview(getDb(), period);
+  const segment = resolveSegment((await cookies()).get(SEGMENT_COOKIE)?.value);
+  const now = new Date();
+  const spec = resolvePeriod(sp, chisinauDate(now));
+  const o = await getOverview(getDb(), spec, now, segmentLanguage(segment));
+  const period = spec.days;
 
   const perPlatformIndex = new Map<string, number>();
   const series = o.accounts.map((a) => {
@@ -27,8 +32,8 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">Обзор</h1>
         <div className="flex gap-1 rounded-lg border border-line p-1 text-sm">
-          {PERIODS.map((p) => (
-            <Link key={p} href={`/?period=${p}`} className={`rounded-md px-3 py-1 ${p === period ? "bg-line text-fg" : "text-muted hover:text-fg"}`}>
+          {PERIOD_PRESETS.map((p) => (
+            <Link key={p} href={`/?period=${p}`} className={`rounded-md px-3 py-1 ${p === spec.preset ? "bg-line text-fg" : "text-muted hover:text-fg"}`}>
               {p} дней
             </Link>
           ))}

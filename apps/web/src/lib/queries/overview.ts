@@ -2,8 +2,8 @@ import { and, eq, gte, inArray, lte } from "drizzle-orm";
 import { accounts, accountMetricsDaily, goals, posts, postMetricsSnapshots, type Platform } from "@/lib/db/schema";
 import type { AnyDb } from "@/lib/db/types";
 import { chisinauDate } from "@/lib/time";
+import type { PeriodSpec } from "@/lib/ui/period";
 
-export type Period = 7 | 30 | 90;
 
 export interface AccountCard {
   accountId: string;
@@ -20,7 +20,7 @@ export interface AccountCard {
 }
 
 export interface Overview {
-  period: Period;
+  period: PeriodSpec;
   accounts: AccountCard[];
   growth: Array<{ date: string } & Record<string, number | string>>;
 }
@@ -30,26 +30,33 @@ function addDays(ymd: string, n: number): string {
   return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
 }
 
-export async function getOverview(db: AnyDb, period: Period, now = new Date()): Promise<Overview> {
+export async function getOverview(db: AnyDb, period: PeriodSpec, now = new Date(), language?: "ru" | "en"): Promise<Overview> {
   const today = chisinauDate(now);
   const yesterday = addDays(today, -1);
   const dayBefore = addDays(today, -2);
-  const periodStart = addDays(today, -(period - 1));
+  const periodStart = period.from;
+  const periodEnd = period.to;
   const monthStart = `${today.slice(0, 7)}-01`;
 
-  const accs = await db.select().from(accounts).orderBy(accounts.platform, accounts.handle);
+  const accs = await db
+    .select()
+    .from(accounts)
+    .where(language ? eq(accounts.language, language) : undefined)
+    .orderBy(accounts.platform, accounts.handle);
   if (accs.length === 0) return { period, accounts: [], growth: [] };
   const ids = accs.map((a) => a.id);
 
   const daily = await db
     .select()
     .from(accountMetricsDaily)
-    .where(and(inArray(accountMetricsDaily.accountId, ids), gte(accountMetricsDaily.date, periodStart), lte(accountMetricsDaily.date, today)))
+    .where(and(inArray(accountMetricsDaily.accountId, ids), gte(accountMetricsDaily.date, periodStart), lte(accountMetricsDaily.date, periodEnd)))
     .orderBy(accountMetricsDaily.date);
 
   const goalRows = await db.select().from(goals).where(and(inArray(goals.accountId, ids), eq(goals.month, monthStart), eq(goals.metric, "followers")));
 
-  const since = new Date(now.getTime() - period * 86_400_000);
+  // posts published inside the period (Chisinau calendar days → UTC bounds are approximate by design)
+  const since = new Date(periodStart + "T00:00:00+03:00");
+  const until = new Date(periodEnd + "T23:59:59+03:00");
   const snapRows = await db
     .select({
       accountId: posts.accountId,
@@ -64,7 +71,7 @@ export async function getOverview(db: AnyDb, period: Period, now = new Date()): 
     })
     .from(posts)
     .innerJoin(postMetricsSnapshots, eq(postMetricsSnapshots.postId, posts.id))
-    .where(and(inArray(posts.accountId, ids), gte(posts.publishedAt, since)));
+    .where(and(inArray(posts.accountId, ids), gte(posts.publishedAt, since), lte(posts.publishedAt, until)));
 
   // latest snapshot per post
   const latest = new Map<string, (typeof snapRows)[number]>();

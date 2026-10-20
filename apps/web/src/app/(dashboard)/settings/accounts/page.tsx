@@ -1,4 +1,6 @@
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
+import { cookies } from "next/headers";
+import { resolveSegment, segmentLanguage, SEGMENT_COOKIE } from "@/lib/ui/segment";
 import { getDb } from "@/lib/db/client";
 import { accounts, goals, syncRuns } from "@/lib/db/schema";
 import { addAccountAction, setGoalAction, syncNowAction } from "./actions";
@@ -14,7 +16,12 @@ function monthValue(d = new Date()) {
 export default async function AccountsSettingsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const sp = await searchParams;
   const db = getDb();
-  const rows = await db.select().from(accounts).orderBy(accounts.platform, accounts.handle);
+  const segLang = segmentLanguage(resolveSegment((await cookies()).get(SEGMENT_COOKIE)?.value));
+  const rows = await db
+    .select()
+    .from(accounts)
+    .where(segLang ? eq(accounts.language, segLang) : undefined)
+    .orderBy(accounts.platform, accounts.handle);
   const goalRows = await db.select().from(goals);
   const runs = await db.select().from(syncRuns).orderBy(desc(syncRuns.startedAt)).limit(20);
   const thisMonth = `${monthValue()}-01`;
@@ -35,7 +42,7 @@ export default async function AccountsSettingsPage({ searchParams }: { searchPar
             <tr>
               <th className="py-2">Площадка</th>
               <th>Хендл</th>
-              <th>Язык</th>
+              <th>Сегмент</th>
               <th>Роль</th>
               <th>Статус</th>
               <th>Токен до</th>

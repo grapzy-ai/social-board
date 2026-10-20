@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { getDb } from "@/lib/db/client";
+import { resolveSegment, segmentLanguage, SEGMENT_COOKIE } from "@/lib/ui/segment";
 import { accounts, POST_FORMATS, type Label, type PostFormat } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { listPosts, type PostSort } from "@/lib/queries/posts";
 import { LabelButtons } from "@/components/ui/LabelButtons";
 import { Multiplier } from "@/components/ui/Multiplier";
@@ -13,10 +16,16 @@ const FORMAT_TEXT: Record<PostFormat, string> = { reel: "Reels", carousel: "Ка
 export default async function PostsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const sp = await searchParams;
   const db = getDb();
-  const accs = await db.select({ id: accounts.id, platform: accounts.platform, handle: accounts.handle, language: accounts.language }).from(accounts);
+  const segment = resolveSegment((await cookies()).get(SEGMENT_COOKIE)?.value);
+  const segLang = segmentLanguage(segment);
+  const accs = await db
+    .select({ id: accounts.id, platform: accounts.platform, handle: accounts.handle, language: accounts.language })
+    .from(accounts)
+    .where(segLang ? eq(accounts.language, segLang) : undefined);
   const format = (POST_FORMATS as readonly string[]).includes(sp.format ?? "") ? (sp.format as PostFormat) : undefined;
   const label = (["hit", "miss", "odd"] as const).includes(sp.label as never) ? (sp.label as Exclude<Label, null>) : undefined;
-  const language = sp.lang === "ru" || sp.lang === "en" ? sp.lang : undefined;
+  // the segment decides the language; an explicit ?lang= only narrows the «Все» view
+  const language = segLang ?? (sp.lang === "ru" || sp.lang === "en" ? sp.lang : undefined);
   const accountId = accs.some((a) => a.id === sp.account) ? sp.account : undefined;
   const sort: PostSort = sp.sort === "multiplier" ? "multiplier" : "date";
   const rows = await listPosts(db, { accountId, format, label, language }, sort);
