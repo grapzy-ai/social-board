@@ -8,6 +8,7 @@ import {
   boolean,
   date,
   jsonb,
+  bigint,
   uniqueIndex,
   index,
 } from "drizzle-orm/pg-core";
@@ -206,6 +207,84 @@ export const manualMetrics = pgTable(
   },
   (t) => [uniqueIndex("manual_metrics_account_date_uq").on(t.accountId, t.date)],
 );
+
+// ---------------------------------------------------------------------------
+// Content factory (0006): inbox intake + drafts
+
+export const INBOX_SOURCES = ["bot", "drive", "manual"] as const;
+export type InboxSource = (typeof INBOX_SOURCES)[number];
+export const INBOX_KINDS = ["voice", "text", "link", "photo", "video", "document", "forward"] as const;
+export type InboxKind = (typeof INBOX_KINDS)[number];
+export const INBOX_STATUSES = ["new", "sorted", "used", "archived"] as const;
+export type InboxStatus = (typeof INBOX_STATUSES)[number];
+
+export const PILLAR_KEYS = ["influence", "build", "life", "market"] as const;
+export type PillarKey = (typeof PILLAR_KEYS)[number];
+export const TARGET_KEYS = ["reel", "threads", "carousel", "story", "tg", "tiktok_life"] as const;
+export type TargetKey = (typeof TARGET_KEYS)[number];
+
+export type SortTags = {
+  pillar: PillarKey | null;
+  format: TargetKey | null;
+  kind: "raw" | "idea" | "reference" | "trend";
+  language: "ru" | "en";
+  summary: string;
+  hooks: string[];
+};
+
+export const DRAFT_TYPES = ["reel", "threads", "carousel", "story", "tg"] as const;
+export type DraftType = (typeof DRAFT_TYPES)[number];
+export const DRAFT_STATUSES = ["idea", "draft", "ready", "approved", "scheduled", "published", "rejected"] as const;
+export type DraftStatus = (typeof DRAFT_STATUSES)[number];
+
+export type DraftBody = { text: string } | { script: string; hooks: string[]; cover: string } | { slides: string[]; caption: string };
+
+export const inboxItems = pgTable(
+  "inbox_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    source: text("source", { enum: INBOX_SOURCES }).notNull(),
+    kind: text("kind", { enum: INBOX_KINDS }).notNull(),
+    tgChatId: text("tg_chat_id"),
+    tgMessageId: bigint("tg_message_id", { mode: "number" }),
+    tgFileId: text("tg_file_id"),
+    text: text("text"),
+    transcript: text("transcript"),
+    mediaRef: text("media_ref"),
+    tags: jsonb("tags").$type<SortTags>(),
+    language: text("language", { enum: LANGUAGES }),
+    status: text("status", { enum: INBOX_STATUSES }).notNull().default("new"),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("inbox_tg_msg_uq").on(t.tgChatId, t.tgMessageId), index("inbox_status_idx").on(t.status)],
+);
+
+export const drafts = pgTable(
+  "drafts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    inboxItemId: uuid("inbox_item_id").references(() => inboxItems.id, { onDelete: "set null" }),
+    pillarId: uuid("pillar_id").references(() => pillars.id, { onDelete: "set null" }),
+    accountId: uuid("account_id").references(() => accounts.id, { onDelete: "set null" }),
+    type: text("type", { enum: DRAFT_TYPES }).notNull(),
+    language: text("language", { enum: LANGUAGES }).notNull().default("ru"),
+    title: text("title").notNull(),
+    body: jsonb("body").$type<DraftBody>().notNull(),
+    status: text("status", { enum: DRAFT_STATUSES }).notNull().default("draft"),
+    assets: jsonb("assets"),
+    scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    publishedUrl: text("published_url"),
+    publishedPostId: uuid("published_post_id").references(() => posts.id, { onDelete: "set null" }),
+    publishError: text("publish_error"),
+    ...timestamps,
+  },
+  (t) => [index("drafts_status_idx").on(t.status), index("drafts_inbox_idx").on(t.inboxItemId)],
+);
+
+export type InboxItem = typeof inboxItems.$inferSelect;
+export type Draft = typeof drafts.$inferSelect;
 
 export type Account = typeof accounts.$inferSelect;
 export type Post = typeof posts.$inferSelect;
