@@ -24,6 +24,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     title: "Работа",
     items: [
+      { href: "/inbox", label: "Входящие", ready: true },
       { href: "/replies", label: "Ответы", ready: false },
       { href: "/signals", label: "Сигналы", ready: false },
       { href: "/drafts", label: "Черновики", ready: false },
