@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/shell/PageHeader";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { DraftEditor } from "@/components/drafts/DraftEditor";
 import { setDraftStatusAction } from "../actions";
+import { PublishTelegramButton } from "./PublishTelegramButton";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -60,6 +61,7 @@ export default async function DraftPage({ params }: { params: Promise<{ id: stri
             <button className={`rounded-lg px-3 py-1.5 text-xs ${s === "approved" || s === "ready" ? "bg-accent font-medium text-accent-fg" : "border border-line hover:text-fg"}`}>{ACTION_LABEL[s]}</button>
           </form>
         ))}
+        {draft.type === "tg" && draft.status === "approved" && <PublishTelegramButton draftId={draft.id} />}
         <Link href="/drafts" className="ml-auto rounded-lg px-3 py-1.5 text-xs text-muted hover:text-fg">
           ← Черновики
         </Link>

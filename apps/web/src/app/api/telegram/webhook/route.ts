@@ -3,6 +3,7 @@ import { handleUpdate, secretMatches } from "@/lib/telegram/webhook";
 import { downloadFile } from "@/lib/telegram/files";
 import { transcribeOpenAI } from "@/lib/transcribe";
 import { sortInboxItem } from "@/lib/claude/sorter";
+import { makeTelegramPublisher } from "@/lib/publish/telegram";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -20,7 +21,7 @@ export async function POST(req: Request) {
     return Response.json({ ok: false });
   }
   try {
-    const out = await handleUpdate(getDb(), update, { download: downloadFile, transcribe: transcribeOpenAI, sort: sortInboxItem });
+    const out = await handleUpdate(getDb(), update, { download: downloadFile, transcribe: transcribeOpenAI, sort: sortInboxItem, publish: makeTelegramPublisher() });
     return Response.json({ ok: true, ...out });
   } catch (e) {
     console.error("telegram webhook", e);

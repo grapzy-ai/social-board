@@ -3,7 +3,8 @@ import { cookies } from "next/headers";
 import { resolveSegment, segmentLanguage, SEGMENT_COOKIE } from "@/lib/ui/segment";
 import { getDb } from "@/lib/db/client";
 import { accounts, goals, manualMetrics, syncRuns } from "@/lib/db/schema";
-import { addAccountAction, manualMetricsAction, setGoalAction, syncNowAction } from "./actions";
+import { addAccountAction, checkChannelAction, connectWebhookAction, manualMetricsAction, setGoalAction, syncNowAction } from "./actions";
+import { getWebhookInfo } from "@/lib/telegram/admin";
 import { chisinauDate } from "@/lib/time";
 import { PLATFORM_LABEL } from "@/lib/ui/platform";
 import { PageHeader } from "@/components/shell/PageHeader";
@@ -30,6 +31,9 @@ export default async function AccountsSettingsPage({ searchParams }: { searchPar
   const today = chisinauDate(new Date());
   const MANUAL_PLATFORMS = new Set(["linkedin", "vk", "youtube", "tiktok", "x"]);
   const thisMonth = `${monthValue()}-01`;
+  const webhook = process.env.TG_BOT_TOKEN ? await getWebhookInfo() : null;
+  const expectedWebhook = `${(process.env.APP_BASE_URL ?? "").replace(/\/$/, "")}/api/telegram/webhook`;
+  const tgAccounts = rows.filter((a) => a.platform === "telegram");
 
   return (
     <div className="space-y-10">
@@ -124,6 +128,28 @@ export default async function AccountsSettingsPage({ searchParams }: { searchPar
           </ul>
         </section>
       )}
+
+      <section className="rounded-xl border border-line p-5">
+        <h2 className="mb-2 text-lg font-medium">Telegram-бот — входящие и публикация</h2>
+        <p className="mb-3 text-sm text-muted">Бот принимает голосовые, тексты и ссылки во «Входящие», присылает карточки на согласование и публикует согласованные посты в канал. Для публикации бот должен быть админом канала с правом «Публикация сообщений».</p>
+        {sp.bot && <p className="mb-2 text-sm text-accent">Вебхук: {sp.bot === "ok" ? "подключён" : `ошибка — ${sp.bot}`}</p>}
+        {sp.channel && <p className="mb-2 text-sm text-accent">Канал: {sp.channel}</p>}
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          <span className={webhook?.url === expectedWebhook ? "text-good" : "text-muted"}>
+            {webhook === null ? "токен бота не задан" : webhook.url === expectedWebhook ? "вебхук подключён" : webhook.url ? `вебхук смотрит на ${webhook.url}` : "вебхук не подключён"}
+            {webhook?.lastErrorMessage ? ` · последняя ошибка: ${webhook.lastErrorMessage}` : ""}
+          </span>
+          <form action={connectWebhookAction}>
+            <button className="rounded bg-accent px-3 py-1.5 text-xs text-accent-fg">Подключить вебхук</button>
+          </form>
+          {tgAccounts.map((a) => (
+            <form key={a.id} action={checkChannelAction}>
+              <input type="hidden" name="accountId" value={a.id} />
+              <button className="rounded border border-line px-3 py-1.5 text-xs">Проверить права в @{a.handle}</button>
+            </form>
+          ))}
+        </div>
+      </section>
 
       <section className="grid gap-6 md:grid-cols-2">
         <div className="rounded-xl border border-line p-5">
