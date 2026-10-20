@@ -1,10 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { z } from "zod";
 import { getDb } from "@/lib/db/client";
 import { addAccount } from "@/lib/sync/tokens";
 import { runSync } from "@/lib/sync/run";
+import { syncSegment } from "@/lib/sync/segment";
+import { resolveSegment, segmentLanguage, SEGMENT_COOKIE } from "@/lib/ui/segment";
 import { goals, PLATFORMS } from "@/lib/db/schema";
 import { requireAllowedUser } from "@/lib/auth/require";
 
@@ -58,4 +62,18 @@ export async function syncNowAction(formData: FormData) {
   revalidatePath("/settings/accounts");
   revalidatePath("/");
   revalidatePath("/posts");
+}
+
+export async function syncSegmentAction(formData: FormData) {
+  await requireAllowedUser();
+  const segment = resolveSegment((await cookies()).get(SEGMENT_COOKIE)?.value);
+  const report = await syncSegment(getDb(), segmentLanguage(segment));
+  revalidatePath("/");
+  revalidatePath("/posts");
+  revalidatePath("/settings/accounts");
+  const ok = report.results.filter((r) => r.status !== "error").length;
+  const back = String(formData.get("back") ?? "/");
+  const safeBack = back.startsWith("/") && !back.startsWith("//") ? back : "/";
+  const sep = safeBack.includes("?") ? "&" : "?";
+  redirect(`${safeBack}${sep}refreshed=${ok}/${report.results.length}`);
 }

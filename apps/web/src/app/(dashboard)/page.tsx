@@ -5,6 +5,7 @@ import { getOverview } from "@/lib/queries/overview";
 import { resolveSegment, segmentLanguage, SEGMENT_COOKIE } from "@/lib/ui/segment";
 import { resolvePeriod } from "@/lib/ui/period";
 import { PageHeader } from "@/components/shell/PageHeader";
+import { RefreshButton } from "@/components/ui/RefreshButton";
 import { chisinauDate } from "@/lib/time";
 import { GrowthChart } from "@/components/charts/GrowthChart";
 import { accountColor, fmtDelta, fmtInt, PLATFORM_LABEL } from "@/lib/ui/platform";
@@ -30,7 +31,18 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Обзор" spec={spec} basePath="/" />
+      <PageHeader
+        title="Обзор"
+        spec={spec}
+        basePath="/"
+        actions={
+          <>
+            <RefreshButton back={`/?period=${spec.preset ?? ""}${spec.preset ? "" : `&from=${spec.from}&to=${spec.to}`}`} />
+            <Link href="/share" className="rounded-lg border border-line px-3 py-1.5 text-xs text-muted hover:text-fg">Поделиться</Link>
+          </>
+        }
+      />
+      {sp.refreshed && <p className="-mt-3 text-xs text-muted">Обновлено: {sp.refreshed} аккаунтов синхронизировано.</p>}
 
       <section>
         <h2 className="mb-3 text-sm uppercase tracking-wide text-muted">Цели на {monthName}</h2>

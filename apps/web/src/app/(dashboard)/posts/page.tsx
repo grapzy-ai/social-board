@@ -9,6 +9,7 @@ import { LabelButtons } from "@/components/ui/LabelButtons";
 import { Multiplier } from "@/components/ui/Multiplier";
 import { fmtInt, PLATFORM_LABEL } from "@/lib/ui/platform";
 import { PageHeader } from "@/components/shell/PageHeader";
+import { RefreshButton } from "@/components/ui/RefreshButton";
 
 export const dynamic = "force-dynamic";
 
@@ -44,10 +45,13 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
       <PageHeader
         title={<>Посты <span className="text-base font-normal text-muted">{rows.length}</span></>}
         actions={
+          <>
+          <RefreshButton back={link({})} />
           <div className="flex gap-0.5 rounded-lg border border-line p-0.5 text-xs">
             <Link href={link({ sort: "date" })} className={`rounded-md px-2.5 py-1 ${sort === "date" ? "bg-fg text-surface" : "text-muted hover:text-fg"}`}>по дате</Link>
             <Link href={link({ sort: "multiplier" })} className={`rounded-md px-2.5 py-1 ${sort === "multiplier" ? "bg-fg text-surface" : "text-muted hover:text-fg"}`}>по множителю</Link>
           </div>
+          </>
         }
       />
 
