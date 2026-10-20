@@ -17,7 +17,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   const series = o.accounts.map((a) => {
     const i = perPlatformIndex.get(a.platform) ?? 0;
     perPlatformIndex.set(a.platform, i + 1);
-    return { key: a.accountId, label: `${PLATFORM_LABEL[a.platform]} ${a.language === "en" ? "EN" : ""}`.trim(), color: accountColor(a.platform, i) };
+    return { key: a.accountId, label: `${PLATFORM_LABEL[a.platform]} ${a.language === "en" ? "EN" : ""}`.trim(), color: accountColor(a.platform, a.language, i) };
   });
   const colorOf = Object.fromEntries(series.map((s) => [s.key, s.color]));
   const monthName = new Intl.DateTimeFormat("ru-RU", { month: "long" }).format(new Date());

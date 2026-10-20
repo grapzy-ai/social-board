@@ -13,7 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
-export const PLATFORMS = ["threads", "instagram", "telegram", "tiktok", "vk", "youtube", "linkedin"] as const;
+export const PLATFORMS = ["threads", "instagram", "telegram", "tiktok", "vk", "youtube", "linkedin", "x"] as const;
 export type Platform = (typeof PLATFORMS)[number];
 
 export const POST_FORMATS = ["reel", "carousel", "image", "thread", "tg_post", "short", "tiktok"] as const;

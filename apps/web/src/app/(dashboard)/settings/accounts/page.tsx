@@ -2,18 +2,10 @@ import { desc } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { accounts, goals, syncRuns } from "@/lib/db/schema";
 import { addAccountAction, setGoalAction, syncNowAction } from "./actions";
+import { PLATFORM_LABEL } from "@/lib/ui/platform";
 
 export const dynamic = "force-dynamic";
 
-const PLATFORM_LABEL: Record<string, string> = {
-  threads: "Threads",
-  instagram: "Instagram",
-  telegram: "Telegram",
-  tiktok: "TikTok",
-  vk: "VK",
-  youtube: "YouTube",
-  linkedin: "LinkedIn",
-};
 
 function monthValue(d = new Date()) {
   return d.toISOString().slice(0, 7);
@@ -140,4 +132,4 @@ export default async function AccountsSettingsPage({ searchParams }: { searchPar
   );
 }
 
-const PLATFORMS_ORDER = ["instagram", "threads", "telegram", "tiktok", "vk", "youtube", "linkedin"] as const;
+const PLATFORMS_ORDER = ["instagram", "threads", "telegram", "tiktok", "vk", "youtube", "linkedin", "x"] as const;
