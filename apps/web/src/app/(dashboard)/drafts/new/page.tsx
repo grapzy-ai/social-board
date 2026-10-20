@@ -3,6 +3,7 @@ import { getDb } from "@/lib/db/client";
 import { getInboxItem } from "@/lib/queries/inbox";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { generatePackageAction } from "../actions";
+import { GenerateButton } from "./GenerateButton";
 
 export const dynamic = "force-dynamic";
 // One package is one long Claude call; give the action the cron budget.
@@ -34,7 +35,7 @@ export default async function NewDraftPage({ searchParams }: { searchParams: Pro
         </fieldset>
         <div className="flex justify-end gap-2">
           <Link href="/drafts" className="rounded-lg px-3 py-1.5 text-xs text-muted hover:text-fg">Отмена</Link>
-          <button className="rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accent-fg">Сгенерировать пакет</button>
+          <GenerateButton />
         </div>
       </form>
     </div>

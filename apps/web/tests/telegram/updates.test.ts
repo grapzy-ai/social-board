@@ -18,6 +18,9 @@ describe("parseUpdate", () => {
     expect(parseUpdate({ callback_query: { id: "c1", data: "approve:abc", message: { message_id: 9, chat: { id: 5 } } } })).toEqual({
       callback: { tgChatId: "5", callbackId: "c1", data: "approve:abc", messageId: 9 },
     });
+    // Telegram entity offsets are UTF-16 code units: an emoji before the URL must not shift the slice
+    const emoji = parseUpdate({ message: { message_id: 8, chat: { id: 5 }, text: "🔥 https://drive.google.com/x", entities: [{ type: "url", offset: 3, length: 26 }] } });
+    expect(emoji).toMatchObject({ message: { kind: "text", mediaRef: "https://drive.google.com/x" } });
     expect(parseUpdate({ edited_message: {} })).toBeNull();
     expect(parseUpdate(null)).toBeNull();
   });

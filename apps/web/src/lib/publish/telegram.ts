@@ -15,23 +15,39 @@ export function renderTelegramHtml(body: { text: string }): string {
 
 /**
  * Publishes an approved `tg` draft to the channel of its account (`@handle`) through the bot.
- * The UPDATE to `published` is guarded by `status = approved`, so a concurrent second call becomes a noop.
+ * The row is CLAIMED first (`approved` → `publishing`, guarded UPDATE), then Telegram is called once,
+ * then the row becomes `published` — so two overlapping calls post exactly once (Review Focus 5).
+ * Every failure of an approved draft is written to `publish_error` so the dashboard can show it.
  */
 export function makeTelegramPublisher(f: typeof fetch = fetch): Publisher {
   return async (db: AnyDb, draftId: string) => {
     const [d] = await db.select().from(drafts).where(eq(drafts.id, draftId)).limit(1);
     if (!d) return { ok: false, error: "черновик не найден" };
     if (d.status === "published") return { ok: false, error: "уже опубликован" };
+    if (d.status === "publishing") return { ok: false, error: "уже публикуется" };
     if (d.status !== "approved") return { ok: false, error: "не согласован" };
-    if (d.type !== "tg") return { ok: false, error: "публикация пока только для Telegram" };
-    if (!d.accountId) return { ok: false, error: "у черновика нет Telegram-аккаунта" };
-    if (!("text" in d.body)) return { ok: false, error: "пустой текст" };
+
+    const fail = async (error: string) => {
+      await db.update(drafts).set({ publishError: error, updatedAt: new Date() }).where(eq(drafts.id, d.id));
+      return { ok: false as const, error };
+    };
+    if (d.type !== "tg") return fail("публикация пока только для Telegram");
+    if (!d.accountId) return fail("у черновика нет Telegram-аккаунта");
+    if (!("text" in d.body)) return fail("пустой текст");
     const html = renderTelegramHtml(d.body);
-    if (html.length > TG_MAX_TEXT) return { ok: false, error: `текст длиннее ${TG_MAX_TEXT} символов — Telegram не примет` };
+    if (html.length > TG_MAX_TEXT) return fail(`текст длиннее ${TG_MAX_TEXT} символов — Telegram не примет`);
     const [acc] = await db.select({ handle: accounts.handle }).from(accounts).where(eq(accounts.id, d.accountId)).limit(1);
-    if (!acc) return { ok: false, error: "аккаунт не найден" };
+    if (!acc) return fail("аккаунт не найден");
     const token = process.env.TG_BOT_TOKEN;
-    if (!token) return { ok: false, error: "TG_BOT_TOKEN не задан" };
+    if (!token) return fail("TG_BOT_TOKEN не задан");
+
+    // claim
+    const claimed = await db
+      .update(drafts)
+      .set({ status: "publishing", updatedAt: new Date() })
+      .where(and(eq(drafts.id, d.id), eq(drafts.status, "approved")))
+      .returning({ id: drafts.id });
+    if (claimed.length === 0) return { ok: false, error: "уже публикуется или опубликован" };
 
     let messageId: number | null = null;
     let error: string | null = null;
@@ -50,14 +66,15 @@ export function makeTelegramPublisher(f: typeof fetch = fetch): Publisher {
 
     const now = new Date();
     if (messageId === null) {
-      await db.update(drafts).set({ publishError: error ?? "unknown", updatedAt: now }).where(eq(drafts.id, d.id));
+      // release the claim; the draft stays approved with the error visible
+      await db.update(drafts).set({ status: "approved", publishError: error ?? "unknown", updatedAt: now }).where(and(eq(drafts.id, d.id), eq(drafts.status, "publishing")));
       return { ok: false, error: error ?? "unknown" };
     }
     const url = `https://t.me/${acc.handle}/${messageId}`;
     await db
       .update(drafts)
       .set({ status: "published", publishedAt: now, publishedUrl: url, publishError: null, updatedAt: now })
-      .where(and(eq(drafts.id, d.id), eq(drafts.status, "approved")));
+      .where(and(eq(drafts.id, d.id), eq(drafts.status, "publishing")));
     return { ok: true, url };
   };
 }

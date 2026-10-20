@@ -13,7 +13,10 @@ export const maxDuration = 60;
  * for hours, and a wrong secret is not something we want retried.
  */
 export async function POST(req: Request) {
-  if (!secretMatches(req.headers.get("x-telegram-bot-api-secret-token"))) return Response.json({ ok: false });
+  if (!secretMatches(req.headers.get("x-telegram-bot-api-secret-token"))) {
+    console.warn("telegram webhook: secret mismatch (rotated CRON_SECRET? → Settings → «Подключить вебхук»)");
+    return Response.json({ ok: false });
+  }
   let update: unknown;
   try {
     update = await req.json();

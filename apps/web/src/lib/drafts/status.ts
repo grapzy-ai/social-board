@@ -7,6 +7,8 @@ const ALLOWED: Record<DraftStatus, DraftStatus[]> = {
   ready: ["approved", "rejected", "draft"],
   approved: ["draft"],
   scheduled: ["approved", "draft"],
+  // a row can stay `publishing` only after a crash mid-send; recovery is manual and explicit
+  publishing: ["approved"],
   published: [],
   rejected: ["draft"],
 };

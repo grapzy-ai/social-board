@@ -57,6 +57,7 @@ export const DRAFT_STATUS_LABEL: Record<DraftStatus, string> = {
   ready: "на согласование",
   approved: "согласовано",
   scheduled: "запланировано",
+  publishing: "публикуется",
   published: "опубликовано",
   rejected: "отклонено",
 };

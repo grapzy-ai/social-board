@@ -234,7 +234,7 @@ export type SortTags = {
 
 export const DRAFT_TYPES = ["reel", "threads", "carousel", "story", "tg"] as const;
 export type DraftType = (typeof DRAFT_TYPES)[number];
-export const DRAFT_STATUSES = ["idea", "draft", "ready", "approved", "scheduled", "published", "rejected"] as const;
+export const DRAFT_STATUSES = ["idea", "draft", "ready", "approved", "scheduled", "publishing", "published", "rejected"] as const;
 export type DraftStatus = (typeof DRAFT_STATUSES)[number];
 
 export type ReelBody = { script: string; hooks: string[]; cover: string; angle?: string; hookMechanic?: string; funnel?: string };

@@ -77,4 +77,30 @@ describe("makeTelegramPublisher", () => {
     if (!r.ok) expect(r.error).toContain("4096");
     expect(f).not.toHaveBeenCalled();
   });
+
+  it("two overlapping publishes post exactly once (claim before send)", async () => {
+    const [d] = await db.insert(drafts).values({ type: "tg", title: "t", body: { text: "Заголовок\n\nтекст" }, status: "approved", accountId: tgId }).returning();
+    let n = 0;
+    const f = vi.fn(async () => {
+      n += 1;
+      await new Promise((r) => setTimeout(r, 50));
+      return json({ ok: true, result: { message_id: n } });
+    });
+    const publish = makeTelegramPublisher(f as unknown as typeof fetch);
+    const [a, b] = await Promise.all([publish(db, d.id), publish(db, d.id)]);
+    expect([a.ok, b.ok].filter(Boolean)).toHaveLength(1);
+    expect(f).toHaveBeenCalledTimes(1);
+    const [row] = await db.select().from(drafts).where(eq(drafts.id, d.id));
+    expect(row.status).toBe("published");
+    expect(row.publishedUrl).toBe("https://t.me/vadimbordian/1");
+  });
+
+  it("records publish_error for an approved draft that cannot be sent (no account)", async () => {
+    const [d] = await db.insert(drafts).values({ type: "tg", title: "t", body: { text: "x" }, status: "approved" }).returning();
+    const r = await makeTelegramPublisher(vi.fn() as unknown as typeof fetch)(db, d.id);
+    expect(r.ok).toBe(false);
+    const [row] = await db.select().from(drafts).where(eq(drafts.id, d.id));
+    expect(row.status).toBe("approved");
+    expect(row.publishError).toMatch(/аккаунт/);
+  });
 });

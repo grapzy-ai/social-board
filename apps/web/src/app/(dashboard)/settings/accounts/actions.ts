@@ -100,6 +100,7 @@ export async function connectWebhookAction() {
   await requireAllowedUser();
   const { setWebhook } = await import("@/lib/telegram/admin");
   const { webhookSecret } = await import("@/lib/telegram/webhook");
+  if (!process.env.CRON_SECRET) redirect("/settings/accounts?bot=" + encodeURIComponent("CRON_SECRET не задан — вебхук без секрета не подключаем"));
   const base = (process.env.APP_BASE_URL ?? "").replace(/\/$/, "");
   const r = await setWebhook(`${base}/api/telegram/webhook`, webhookSecret());
   redirect(`/settings/accounts?bot=${r.ok ? "ok" : encodeURIComponent(r.error ?? "error")}`);

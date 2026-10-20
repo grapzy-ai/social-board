@@ -7,6 +7,7 @@ const TONE: Record<DraftStatus, string> = {
   ready: "border-accent text-accent",
   approved: "border-good text-good",
   scheduled: "border-good text-good",
+  publishing: "border-good text-good",
   published: "bg-good text-accent-fg border-good",
   rejected: "border-bad text-bad",
 };

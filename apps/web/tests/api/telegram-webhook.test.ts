@@ -11,7 +11,7 @@ vi.mock("@/lib/telegram/notify", async (orig) => {
 });
 
 import { POST } from "@/app/api/telegram/webhook/route";
-import { handleUpdate, webhookSecret } from "@/lib/telegram/webhook";
+import { handleUpdate, secretMatches, webhookSecret } from "@/lib/telegram/webhook";
 
 const post = (body: unknown, secret?: string) =>
   POST(
@@ -122,5 +122,14 @@ describe("POST /api/telegram/webhook", () => {
     expect(answer).not.toHaveBeenCalled();
     const [row] = await db.select().from(drafts);
     expect(row.status).toBe("ready");
+  });
+
+  it("refuses every request when CRON_SECRET is unset, even the hash of the empty secret", async () => {
+    delete process.env.CRON_SECRET;
+    const derived = webhookSecret("");
+    expect(secretMatches(derived)).toBe(false);
+    const res = await post(textUpdate(5, 99), derived);
+    expect((await res.json()).ok).toBe(false);
+    expect(await db.select().from(inboxItems)).toHaveLength(0);
   });
 });

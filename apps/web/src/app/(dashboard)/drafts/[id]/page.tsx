@@ -19,9 +19,11 @@ const ACTION_LABEL: Record<string, string> = {
   approved: "Согласовать",
   rejected: "Отклонить",
 };
+const RECOVER_LABEL = "Вернуть в согласовано (зависло при публикации)";
 
-export default async function DraftPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function DraftPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | undefined>> }) {
   const { id } = await params;
+  const sp = await searchParams;
   const draft = await getDraft(getDb(), id);
   if (!draft) notFound();
   const locked = draft.status === "published";
@@ -41,7 +43,7 @@ export default async function DraftPage({ params }: { params: Promise<{ id: stri
           </span>
         }
       />
-      {draft.publishError && <p className="mb-4 rounded-lg border border-bad px-3 py-2 text-sm text-bad">Публикация не удалась: {draft.publishError}</p>}
+      {(sp.error || draft.publishError) && <p className="mb-4 rounded-lg border border-bad px-3 py-2 text-sm text-bad">Публикация не удалась: {sp.error ?? draft.publishError}</p>}
       {draft.publishedUrl && (
         <p className="mb-4 text-sm">
           Опубликовано:{" "}
@@ -58,7 +60,7 @@ export default async function DraftPage({ params }: { params: Promise<{ id: stri
           <form key={s} action={setDraftStatusAction}>
             <input type="hidden" name="id" value={draft.id} />
             <input type="hidden" name="status" value={s} />
-            <button className={`rounded-lg px-3 py-1.5 text-xs ${s === "approved" || s === "ready" ? "bg-accent font-medium text-accent-fg" : "border border-line hover:text-fg"}`}>{ACTION_LABEL[s]}</button>
+            <button className={`rounded-lg px-3 py-1.5 text-xs ${s === "approved" || s === "ready" ? "bg-accent font-medium text-accent-fg" : "border border-line hover:text-fg"}`}>{draft.status === "publishing" ? RECOVER_LABEL : ACTION_LABEL[s]}</button>
           </form>
         ))}
         {draft.type === "tg" && draft.status === "approved" && <PublishTelegramButton draftId={draft.id} />}

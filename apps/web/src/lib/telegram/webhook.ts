@@ -28,7 +28,8 @@ export function webhookSecret(cronSecret = process.env.CRON_SECRET ?? ""): strin
 }
 
 export function secretMatches(given: string | null): boolean {
-  if (!given) return false;
+  // No CRON_SECRET → no derivable secret → nothing is accepted (a fixed hash would be public knowledge).
+  if (!given || !process.env.CRON_SECRET) return false;
   const a = Buffer.from(given);
   const b = Buffer.from(webhookSecret());
   return a.length === b.length && timingSafeEqual(a, b);

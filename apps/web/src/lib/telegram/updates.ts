@@ -34,7 +34,8 @@ type Msg = {
 function firstUrl(text: string, entities: Entity[] | undefined): string | null {
   for (const e of entities ?? []) {
     if (e.type === "text_link" && e.url) return e.url;
-    if (e.type === "url") return Array.from(text).slice(e.offset, e.offset + e.length).join("");
+    // Bot API offsets/lengths are in UTF-16 code units — exactly what String#slice uses
+    if (e.type === "url") return text.slice(e.offset, e.offset + e.length);
   }
   const m = text.match(/https?:\/\/\S+/);
   return m ? m[0] : null;

@@ -88,7 +88,8 @@ export async function publishDraftAction(formData: FormData) {
   await requireAllowedUser();
   const id = z.string().uuid().parse(formData.get("id"));
   const { makeTelegramPublisher } = await import("@/lib/publish/telegram");
-  await makeTelegramPublisher()(getDb(), id);
+  const r = await makeTelegramPublisher()(getDb(), id);
   revalidatePath(`/drafts/${id}`);
   revalidatePath("/drafts");
+  if (!r.ok) redirect(`/drafts/${id}?error=${encodeURIComponent(r.error)}`);
 }
