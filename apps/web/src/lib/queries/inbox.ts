@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, or } from "drizzle-orm";
 import type { AnyDb } from "@/lib/db/types";
 import { inboxItems, type InboxItem, type InboxStatus } from "@/lib/db/schema";
 
@@ -8,7 +8,8 @@ const OPEN: InboxStatus[] = ["new", "sorted"];
 
 export async function listInbox(db: AnyDb, f: InboxFilter = {}): Promise<InboxItem[]> {
   const conds = [];
-  if (f.language) conds.push(eq(inboxItems.language, f.language));
+  // unsorted items have no language yet; they must not vanish inside a language segment
+  if (f.language) conds.push(or(eq(inboxItems.language, f.language), isNull(inboxItems.language))!);
   if (f.status === "open") conds.push(inArray(inboxItems.status, OPEN));
   else if (f.status) conds.push(eq(inboxItems.status, f.status));
   return db

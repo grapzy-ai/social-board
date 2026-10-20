@@ -74,7 +74,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  {tab === "open" && (
+                  {tab === "open" && (it.transcript || it.text) && (
                     <Link href={`/drafts/new?inbox=${it.id}`} className="rounded-lg border border-line px-2 py-1 text-xs hover:text-fg">
                       Пакет
                     </Link>

@@ -13,10 +13,13 @@ describe("inbox queries", () => {
       { source: "manual", kind: "link", text: "english", status: "sorted", language: "en", createdAt: new Date(t0.getTime() + 2000) },
       { source: "bot", kind: "text", text: "архив", status: "archived", language: "ru", createdAt: new Date(t0.getTime() + 3000) },
       { source: "bot", kind: "text", text: "использовано", status: "used", language: "ru", createdAt: new Date(t0.getTime() + 4000) },
+      { source: "bot", kind: "voice", text: null, status: "new", language: null, createdAt: new Date(t0.getTime() - 1000) },
     ]);
     const open = await listInbox(db, { status: "open" });
-    expect(open.map((i) => i.text)).toEqual(["english", "вторая", "первая"]);
-    expect((await listInbox(db, { status: "open", language: "ru" })).map((i) => i.text)).toEqual(["вторая", "первая"]);
+    expect(open.map((i) => i.text)).toEqual(["english", "вторая", "первая", null]);
+    // an unsorted item has no language yet and must stay visible in a language segment
+    expect((await listInbox(db, { status: "open", language: "ru" })).map((i) => i.text)).toEqual(["вторая", "первая", null]);
+    expect((await listInbox(db, { status: "open", language: "en" })).map((i) => i.text)).toEqual(["english", null]);
     expect((await listInbox(db, { status: "archived" })).map((i) => i.text)).toEqual(["архив"]);
     expect((await listInbox(db, { status: "used" })).map((i) => i.text)).toEqual(["использовано"]);
     const one = await getInboxItem(db, open[0].id);

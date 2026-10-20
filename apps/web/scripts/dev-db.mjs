@@ -7,7 +7,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const sql = readFileSync(path.join(here, "../../../supabase/migrations/0001_core.sql"), "utf8").split("-- Row Level Security")[0];
+const mig = (f) => readFileSync(path.join(here, "../../../supabase/migrations", f), "utf8");
+const sql = mig("0001_core.sql").split("-- Row Level Security")[0] + "\n" + mig("0006_factory.sql");
 const db = new PGlite();
 await db.exec(sql);
 
@@ -47,6 +48,24 @@ for (const [accId, format] of [[tg.id, "tg_post"], [ig.id, "reel"], [th.id, "thr
   await db.query(`insert into benchmarks (account_id, format, median_views, sample_size, provisional, computed_on) values ($1,$2,$3,6,false,$4)`, [accId, format, format === "reel" ? 2200 : 900, ymd(today)]);
 }
 await db.query(`insert into signals (account_id, type, payload) values ($1,'token_expiring','{}'), ($2,'day11_due','{}')`, [ig.id, th.id]);
+
+// --- content factory: three inbox items + one generated package
+const inb1 = await ins(`insert into inbox_items (source, kind, text, transcript, tags, language, status, created_at) values ('bot','voice',null,'Еду в Сочи знакомиться с руководителем продаж. Два дня в горах, разговоры не про воронку. Понял, что знаю голос человека лучше, чем его походку.', '{"pillar":"build","format":"reel","kind":"idea","language":"ru","summary":"Еду к команде в Сочи — первая встреча вживую","hooks":["У меня 30+ человек в команде. Руководителя продаж увидел вживую впервые","Первая командировка не к клиенту, а к своему сотруднику"]}','ru','used', now() - interval '2 hours') returning id`);
+await ins(`insert into inbox_items (source, kind, text, media_ref, tags, language, status, created_at) values ('bot','link','https://www.instagram.com/reel/C7eyTFNMj9m/','https://www.instagram.com/reel/C7eyTFNMj9m/', '{"pillar":"influence","format":"carousel","kind":"reference","language":"ru","summary":"Референс: карусель «скелет ролика» на 10 слайдов","hooks":[]}','ru','sorted', now() - interval '50 minutes') returning id`);
+await ins(`insert into inbox_items (source, kind, text, status, created_at) values ('bot','voice',null,'new', now() - interval '5 minutes') returning id`);
+const pkg = [
+  ['reel','Каждое пятое размещение не окупается', {script:"[0–2] ГОЛОВА: «Инфлюенс-маркетинг нельзя посчитать». Мы посчитали. 523 размещения.\n[2–8] ЭКРАН стр. 2: На 1 рубль бюджета — 3,1 рубля заказов. ДРР 32%.\n[8–20] ЭКРАН стр. 8: Каждое пятое размещение не окупилось. Каждое четвёртое дало больше 4,5.\n[20–30] ЭКРАН стр. 10: Кампания прогнозируется — факт разошёлся с прогнозом на 11%.\n[30–45] ГОЛОВА: Весь отчёт — бесплатно. Пиши «ИССЛЕДОВАНИЕ».", hooks:["«Инфлюенс нельзя посчитать». Мы посчитали 523 размещения","3,1 рубля на рубль. Данные, не обещания","Селлеры спорили. Мы посчитали"], cover:"Каждое пятое не окупается", angle:"teach", hookMechanic:"number", funnel:"mofu"}, 'ready'],
+  ['reel','Команда 0—01 · Сочи', {script:"[0–2] ТЕКСТ: У меня 30+ человек в команде. Руководителя продаж я увидел вживую впервые.\n[2–10] ГОЛОС: Influencio с 2019 на удалёнке…", hooks:["Я семь лет плачу зарплату людям, которых не видел [?]","Первая командировка не к клиенту, а к сотруднику"], cover:"30+ человек на удалёнке. Еду знакомиться", angle:"story", hookMechanic:"confession", funnel:"tofu"}, 'draft'],
+  ['threads','Threads 1', {text:"Блогеры на WB и Ozon приносят 3,1 рубля на рубль бюджета.\nЭто 523 размещения, 6 брендов, два года.\nСеллеры, какой ДРР получался у вас?"}, 'approved'],
+  ['threads','Threads 2', {text:"Каждое пятое размещение у блогера не окупается.\nИ это нормальная кампания, если остальные четыре дают от 1 до 4,8.\nКто до сих пор оценивает блогеров по одному посту?"}, 'draft'],
+  ['carousel','Что показали 523 размещения у блогеров на WB и Ozon', {slides:["Что показали 523 размещения у блогеров на WB и Ozon · цифры, а не мнения","На 1 ₽ бюджета — 3,1 ₽ заказов. ДРР 32%.","«Типичного» размещения не существует: разброс в 4 раза","Каждое пятое не окупается. Каждое четвёртое даёт больше 4,5 ₽","Отдельный пост — лотерея. Кампания из 10+ — точность около 90%","Нано 4,0 · микро 2,4 · мидл 1,8","Telegram: ROAS 4,3, окупаются 93%","Промокод ловит в 1,5 раза больше заказов, чем ссылка","Селлеру: портфель, а не пост · ДРР кампании · микро и нано первыми · промокод до старта","Весь отчёт — бесплатно. Пиши ИССЛЕДОВАНИЕ ↓"], caption:"Мы посчитали 523 размещения у блогеров до заказа на маркетплейсе. Пиши «ИССЛЕДОВАНИЕ» — пришлю PDF."}, 'draft'],
+  ['story','Сторис 1', {text:"Скрин стр. 2 отчёта + опрос: «Считали продажи от блогеров до заказа?» (опрос: да / нет / пробовали)"}, 'draft'],
+  ['tg','Мы посчитали 523 размещения у блогеров до заказа на маркетплейсе', {text:"Мы посчитали 523 размещения у блогеров до заказа на маркетплейсе. Рынок три года спорил, можно ли так. Можно.\n\nДва года назад я устал от разговора «блогеры не считаются». Каждый созвон с селлером заканчивался одинаково: «охваты красивые, а продажи где?».\n\n• На 1 рубль бюджета кампании блогеры приносят 3,1 рубля заказов. ДРР по всей базе — 32%.\n• Все 8 кампаний окупились.\n\nPDF прикрепляю. Какой ДРР получался у вас и как считали?"}, 'approved'],
+];
+for (const [type, title, body, status] of pkg) {
+  await db.query(`insert into drafts (inbox_item_id, account_id, type, title, body, status, approved_at) values ($1,$2,$3,$4,$5,$6, case when $6 in ('approved') then now() else null end)`, [inb1.id, type === 'tg' ? tg.id : null, type, title, JSON.stringify(body), status]);
+}
+await db.query(`insert into drafts (inbox_item_id, account_id, type, title, body, status, published_at, published_url) values ($1,$2,'tg','Старт серии «Команда»',$3,'published', now() - interval '1 day','https://t.me/vadimbordian/1')`, [inb1.id, tg.id, JSON.stringify({text:"Старт серии «Команда»\n\nОбъезжаю всех лично. Первый — Сочи."})]);
 
 const server = new PGLiteSocketServer({ db, port: 5433, host: "127.0.0.1" });
 await server.start();

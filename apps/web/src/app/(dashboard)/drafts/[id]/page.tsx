@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getDb } from "@/lib/db/client";
 import { getDraft } from "@/lib/queries/drafts";
 import { nextStatuses } from "@/lib/drafts/status";
-import { DRAFT_STATUS_LABEL, DRAFT_TYPE_LABEL } from "@/lib/ui/factory-labels";
+import { DRAFT_TYPE_LABEL } from "@/lib/ui/factory-labels";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { DraftEditor } from "@/components/drafts/DraftEditor";
@@ -32,7 +32,7 @@ export default async function DraftPage({ params }: { params: Promise<{ id: stri
         title={draft.title}
         subtitle={
           <span className="inline-flex items-center gap-2">
-            {DRAFT_TYPE_LABEL[draft.type]} · {DRAFT_STATUS_LABEL[draft.status]} <StatusChip status={draft.status} />
+            {DRAFT_TYPE_LABEL[draft.type]} <StatusChip status={draft.status} />
             {draft.inboxItemId && (
               <Link href={`/inbox/${draft.inboxItemId}`} className="underline">
                 исходник
