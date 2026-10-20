@@ -1,0 +1,11 @@
+import { chromium } from "playwright";
+const [,, url, out, theme = "light", w = "1440", h = "1000"] = process.argv;
+const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", headless: true });
+const ctx = await b.newContext({ viewport: { width: +w, height: +h }, deviceScaleFactor: 1 });
+await ctx.addCookies([{ name: "sb_theme", value: theme, url: "http://127.0.0.1:3100" }, { name: "sb_segment", value: process.env.SEG ?? "ru", url: "http://127.0.0.1:3100" }]);
+const p = await ctx.newPage();
+await p.goto(url, { waitUntil: "load" });
+await p.waitForTimeout(2500);
+await p.screenshot({ path: out, fullPage: true });
+await b.close();
+console.log("saved", out);

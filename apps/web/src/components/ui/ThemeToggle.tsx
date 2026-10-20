@@ -2,8 +2,8 @@ import { setThemeAction } from "@/app/actions/prefs";
 import type { Theme } from "@/lib/ui/theme";
 
 const OPTIONS: Array<{ value: Theme; label: string; title: string }> = [
-  { value: "light", label: "☀", title: "Светлая" },
-  { value: "dark", label: "☾", title: "Тёмная" },
+  { value: "light", label: "день", title: "Светлая тема" },
+  { value: "dark", label: "ночь", title: "Тёмная тема" },
   { value: "system", label: "авто", title: "Как в системе" },
 ];
 
