@@ -2,8 +2,9 @@ import { desc, eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { resolveSegment, segmentLanguage, SEGMENT_COOKIE } from "@/lib/ui/segment";
 import { getDb } from "@/lib/db/client";
-import { accounts, goals, syncRuns } from "@/lib/db/schema";
-import { addAccountAction, setGoalAction, syncNowAction } from "./actions";
+import { accounts, goals, manualMetrics, syncRuns } from "@/lib/db/schema";
+import { addAccountAction, manualMetricsAction, setGoalAction, syncNowAction } from "./actions";
+import { chisinauDate } from "@/lib/time";
 import { PLATFORM_LABEL } from "@/lib/ui/platform";
 import { PageHeader } from "@/components/shell/PageHeader";
 
@@ -25,6 +26,9 @@ export default async function AccountsSettingsPage({ searchParams }: { searchPar
     .orderBy(accounts.platform, accounts.handle);
   const goalRows = await db.select().from(goals);
   const runs = await db.select().from(syncRuns).orderBy(desc(syncRuns.startedAt)).limit(20);
+  const manualRows = await db.select().from(manualMetrics).orderBy(desc(manualMetrics.date)).limit(5);
+  const today = chisinauDate(new Date());
+  const MANUAL_PLATFORMS = new Set(["linkedin", "vk", "youtube", "tiktok", "x"]);
   const thisMonth = `${monthValue()}-01`;
 
   return (
@@ -78,6 +82,15 @@ export default async function AccountsSettingsPage({ searchParams }: { searchPar
                         <button className="rounded bg-accent px-2 py-1 text-accent-fg">Синк</button>
                       </form>
                     )}
+                    {MANUAL_PLATFORMS.has(a.platform) && (
+                      <form action={manualMetricsAction} className="flex items-center gap-1" title="Ручной ввод: цифры из статистики площадки">
+                        <input type="hidden" name="accountId" value={a.id} />
+                        <input name="followers" type="number" min={0} placeholder="подписчики" className="w-24 rounded bg-card px-2 py-1" />
+                        <input name="views" type="number" min={0} placeholder="просмотры" className="w-24 rounded bg-card px-2 py-1" />
+                        <input name="date" type="date" defaultValue={today} className="rounded bg-card px-2 py-1" />
+                        <button className="rounded bg-line px-2 py-1">записать</button>
+                      </form>
+                    )}
                   </td>
                 </tr>
               );
@@ -90,6 +103,27 @@ export default async function AccountsSettingsPage({ searchParams }: { searchPar
           </tbody>
         </table>
       </section>
+
+      {manualRows.length > 0 && (
+        <section className="rounded-xl border border-line p-5">
+          <h2 className="mb-2 text-lg font-medium">Ручные записи</h2>
+          <p className="mb-3 text-sm text-muted">LinkedIn и площадки без API — цифры, которые ты вводишь сам. Подписчики попадают в Обзор и на график.</p>
+          <ul className="space-y-1 text-sm">
+            {manualRows.map((m) => {
+              const acc = rows.find((a) => a.id === m.accountId);
+              return (
+                <li key={m.id} className="flex gap-3 tabular-nums">
+                  <span className="text-muted">{m.date}</span>
+                  <span>{acc ? `${PLATFORM_LABEL[acc.platform]} @${acc.handle}` : m.accountId.slice(0, 8)}</span>
+                  <span>подписчики {m.followers ?? "—"}</span>
+                  <span>просмотры {m.views ?? "—"}</span>
+                  {m.note && <span className="text-muted">{m.note}</span>}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       <section className="grid gap-6 md:grid-cols-2">
         <div className="rounded-xl border border-line p-5">
