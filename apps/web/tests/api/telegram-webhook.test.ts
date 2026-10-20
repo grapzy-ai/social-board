@@ -89,4 +89,17 @@ describe("POST /api/telegram/webhook", () => {
     const [, text] = sendMock.mock.calls[0] as unknown as [string, string];
     expect(text).toContain("ждёт расшифровки");
   });
+
+  it("sorts a text item and acks with pillar and target", async () => {
+    const sort = async () => ({ pillar: "build" as const, format: "reel" as const, kind: "idea" as const, language: "ru" as const, summary: "Еду к команде в Сочи", hooks: [] });
+    const out = await handleUpdate(db, textUpdate(5, 21), { sort, send: sendMock as never });
+    expect(out.action).toBe("inserted");
+    const [row] = await db.select().from(inboxItems);
+    expect(row.status).toBe("sorted");
+    expect(row.tags?.pillar).toBe("build");
+    expect(row.language).toBe("ru");
+    const [, text] = sendMock.mock.calls[0] as unknown as [string, string];
+    expect(text).toContain("Строю");
+    expect(text).toContain("Reels");
+  });
 });
