@@ -27,15 +27,15 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
     for (const [k, v] of Object.entries(merged)) if (v) q.set(k, v);
     return `/posts?${q.toString()}`;
   };
-  const chip = (active: boolean) => `rounded-full px-3 py-1 text-xs ${active ? "bg-neutral-100 text-black" : "border border-neutral-800 text-neutral-400 hover:text-white"}`;
+  const chip = (active: boolean) => `rounded-full px-3 py-1 text-xs ${active ? "bg-fg text-surface" : "border border-line text-muted hover:text-fg"}`;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Посты <span className="text-base font-normal text-neutral-500">{rows.length}</span></h1>
-        <div className="flex gap-1 rounded-lg border border-neutral-800 p-1 text-sm">
-          <Link href={link({ sort: "date" })} className={`rounded-md px-3 py-1 ${sort === "date" ? "bg-neutral-800" : "text-neutral-400"}`}>по дате</Link>
-          <Link href={link({ sort: "multiplier" })} className={`rounded-md px-3 py-1 ${sort === "multiplier" ? "bg-neutral-800" : "text-neutral-400"}`}>по множителю</Link>
+        <h1 className="text-2xl font-semibold tracking-tight">Посты <span className="text-base font-normal text-muted">{rows.length}</span></h1>
+        <div className="flex gap-1 rounded-lg border border-line p-1 text-sm">
+          <Link href={link({ sort: "date" })} className={`rounded-md px-3 py-1 ${sort === "date" ? "bg-line" : "text-muted"}`}>по дате</Link>
+          <Link href={link({ sort: "multiplier" })} className={`rounded-md px-3 py-1 ${sort === "multiplier" ? "bg-line" : "text-muted"}`}>по множителю</Link>
         </div>
       </div>
 
@@ -44,11 +44,11 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
         {accs.map((a) => (
           <Link key={a.id} href={link({ account: a.id })} className={chip(accountId === a.id)}>{PLATFORM_LABEL[a.platform]}{a.language === "en" ? " EN" : ""}</Link>
         ))}
-        <span className="mx-1 text-neutral-700">|</span>
+        <span className="mx-1 text-muted">|</span>
         {POST_FORMATS.map((f) => (
           <Link key={f} href={link({ format: format === f ? undefined : f })} className={chip(format === f)}>{FORMAT_TEXT[f]}</Link>
         ))}
-        <span className="mx-1 text-neutral-700">|</span>
+        <span className="mx-1 text-muted">|</span>
         {(["hit", "miss", "odd"] as const).map((l) => (
           <Link key={l} href={link({ label: label === l ? undefined : l })} className={chip(label === l)}>{{ hit: "залетело", miss: "мимо", odd: "странно" }[l]}</Link>
         ))}
@@ -56,8 +56,8 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
 
       <div className="card overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="text-left text-xs uppercase tracking-wide text-neutral-500">
-            <tr className="border-b border-neutral-800">
+          <thead className="text-left text-xs uppercase tracking-wide text-muted">
+            <tr className="border-b border-line">
               <th className="px-4 py-3">Дата</th>
               <th className="px-2 py-3">Площадка</th>
               <th className="px-2 py-3">Формат</th>
@@ -71,16 +71,16 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.id} className="border-b border-neutral-900 hover:bg-neutral-900/40">
-                <td className="whitespace-nowrap px-4 py-2 text-neutral-400">{r.publishedAt.toISOString().slice(0, 10)}</td>
+              <tr key={r.id} className="border-b border-line hover:bg-surface">
+                <td className="whitespace-nowrap px-4 py-2 text-muted">{r.publishedAt.toISOString().slice(0, 10)}</td>
                 <td className="px-2 py-2">{PLATFORM_LABEL[r.platform]}{r.language === "en" ? " EN" : ""}</td>
-                <td className="px-2 py-2 text-neutral-400">{FORMAT_TEXT[r.format]}</td>
+                <td className="px-2 py-2 text-muted">{FORMAT_TEXT[r.format]}</td>
                 <td className="max-w-md px-2 py-2">
-                  <Link href={`/posts/${r.id}`} className="line-clamp-2 hover:text-[var(--accent)]">{r.text ?? "—"}</Link>
+                  <Link href={`/posts/${r.id}`} className="line-clamp-2 hover:text-accent">{r.text ?? "—"}</Link>
                 </td>
                 <td className="px-2 py-2 text-right tabular-nums">
                   {fmtInt(r.day11Views)}
-                  {r.day11Index !== null && r.day11Index !== 11 && <span className="ml-1 text-[10px] text-neutral-600">д{r.day11Index}</span>}
+                  {r.day11Index !== null && r.day11Index !== 11 && <span className="ml-1 text-[10px] text-muted">д{r.day11Index}</span>}
                 </td>
                 <td className="px-2 py-2 text-right"><Multiplier value={r.multiplier} provisional={r.benchmarkProvisional} /></td>
                 <td className="px-2 py-2 text-right tabular-nums">{fmtInt(r.comments)}</td>
@@ -89,12 +89,12 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
               </tr>
             ))}
             {rows.length === 0 && (
-              <tr><td colSpan={9} className="px-4 py-8 text-center text-neutral-500">Постов нет — проверь фильтры или дождись синка.</td></tr>
+              <tr><td colSpan={9} className="px-4 py-8 text-center text-muted">Постов нет — проверь фильтры или дождись синка.</td></tr>
             )}
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-neutral-600">×Медиана = просмотры на последнем снимке до 11-го дня ÷ медиана формата за 90 дней. * — бенчмарк предварительный.</p>
+      <p className="text-xs text-muted">×Медиана = просмотры на последнем снимке до 11-го дня ÷ медиана формата за 90 дней. * — бенчмарк предварительный.</p>
     </div>
   );
 }

@@ -9,7 +9,7 @@ export interface GrowthSeries {
 }
 
 export function GrowthChart({ data, series }: { data: Array<{ date: string } & Record<string, number | string>>; series: GrowthSeries[] }) {
-  if (data.length === 0) return <p className="py-10 text-center text-sm text-neutral-500">Данных пока нет — появятся после первого синка.</p>;
+  if (data.length === 0) return <p className="py-10 text-center text-sm text-muted">Данных пока нет — появятся после первого синка.</p>;
   const fmtDate = (d: string) => `${d.slice(8, 10)}.${d.slice(5, 7)}`;
   return (
     <div className="h-72 w-full">

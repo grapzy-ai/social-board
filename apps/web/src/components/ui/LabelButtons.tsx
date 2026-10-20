@@ -12,7 +12,7 @@ export function LabelButtons({ postId, current }: { postId: string; current: Lab
           key={l}
           name="label"
           value={current === l ? "none" : l}
-          className={`rounded px-2 py-0.5 text-xs ${current === l ? "bg-[var(--accent)] text-black" : "border border-neutral-800 text-neutral-400 hover:text-white"}`}
+          className={`rounded px-2 py-0.5 text-xs ${current === l ? "bg-accent text-accent-fg" : "border border-line text-muted hover:text-fg"}`}
           title={current === l ? "снять метку" : LABEL_TEXT[l]}
         >
           {LABEL_TEXT[l]}

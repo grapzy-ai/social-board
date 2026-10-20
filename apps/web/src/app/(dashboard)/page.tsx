@@ -26,9 +26,9 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">Обзор</h1>
-        <div className="flex gap-1 rounded-lg border border-neutral-800 p-1 text-sm">
+        <div className="flex gap-1 rounded-lg border border-line p-1 text-sm">
           {PERIODS.map((p) => (
-            <Link key={p} href={`/?period=${p}`} className={`rounded-md px-3 py-1 ${p === period ? "bg-neutral-800 text-white" : "text-neutral-400 hover:text-white"}`}>
+            <Link key={p} href={`/?period=${p}`} className={`rounded-md px-3 py-1 ${p === period ? "bg-line text-fg" : "text-muted hover:text-fg"}`}>
               {p} дней
             </Link>
           ))}
@@ -36,11 +36,11 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       </div>
 
       <section>
-        <h2 className="mb-3 text-sm uppercase tracking-wide text-neutral-500">Цели на {monthName}</h2>
+        <h2 className="mb-3 text-sm uppercase tracking-wide text-muted">Цели на {monthName}</h2>
         <div className="grid gap-4 md:grid-cols-2">
           {o.accounts.length === 0 && (
-            <p className="card p-5 text-sm text-neutral-400">
-              Аккаунтов нет. <Link className="text-[var(--accent)]" href="/settings/accounts">Подключить →</Link>
+            <p className="card p-5 text-sm text-muted">
+              Аккаунтов нет. <Link className="text-accent" href="/settings/accounts">Подключить →</Link>
             </p>
           )}
           {o.accounts.map((a) => (
@@ -49,34 +49,34 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
                 <div className="flex items-center gap-2">
                   <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: colorOf[a.accountId] }} />
                   <span className="text-sm font-medium">{PLATFORM_LABEL[a.platform]}{a.language === "en" ? " EN" : ""}</span>
-                  <span className="text-xs text-neutral-500">@{a.handle}</span>
+                  <span className="text-xs text-muted">@{a.handle}</span>
                 </div>
-                <div className="text-right text-xs text-neutral-400">
+                <div className="text-right text-xs text-muted">
                   <div>{fmtDelta(a.deltaYesterday)} вчера</div>
-                  <div className={a.deltaToday && a.deltaToday > 0 ? "text-[var(--accent)]" : ""}>{fmtDelta(a.deltaToday)} сегодня</div>
+                  <div className={a.deltaToday && a.deltaToday > 0 ? "text-accent" : ""}>{fmtDelta(a.deltaToday)} сегодня</div>
                 </div>
               </div>
               <div className="mt-3 flex items-baseline gap-2">
                 <span className="text-3xl font-semibold tabular-nums">{fmtInt(a.followers)}</span>
-                {a.goal && <span className="text-sm text-neutral-500">→ {fmtInt(a.goal.target)}</span>}
+                {a.goal && <span className="text-sm text-muted">→ {fmtInt(a.goal.target)}</span>}
               </div>
               {a.goal ? (
                 <div className="mt-3">
-                  <div className="h-1.5 w-full overflow-hidden rounded bg-neutral-800">
+                  <div className="h-1.5 w-full overflow-hidden rounded bg-line">
                     <div className="h-full rounded" style={{ width: `${Math.min(100, a.goal.progressPct)}%`, background: colorOf[a.accountId] }} />
                   </div>
-                  <div className="mt-1 text-right text-xs text-neutral-500">{a.goal.progressPct}%</div>
+                  <div className="mt-1 text-right text-xs text-muted">{a.goal.progressPct}%</div>
                 </div>
               ) : (
-                <p className="mt-3 text-xs text-neutral-500">
-                  Цель не задана — <Link className="text-[var(--accent)]" href="/settings/accounts">задать</Link>
+                <p className="mt-3 text-xs text-muted">
+                  Цель не задана — <Link className="text-accent" href="/settings/accounts">задать</Link>
                 </p>
               )}
-              {a.comment && <p className="mt-3 text-sm text-neutral-300">{a.comment}</p>}
-              <dl className="mt-4 grid grid-cols-3 gap-3 border-t border-neutral-800 pt-3 text-xs">
-                <div><dt className="text-neutral-500">За период</dt><dd className="tabular-nums">{fmtDelta(growthOf(o, a.accountId))}</dd></div>
-                <div><dt className="text-neutral-500">Просмотры</dt><dd className="tabular-nums">{fmtInt(a.periodViews)}</dd></div>
-                <div><dt className="text-neutral-500">Реакции</dt><dd className="tabular-nums">{fmtInt(a.periodReactions)}</dd></div>
+              {a.comment && <p className="mt-3 text-sm text-fg">{a.comment}</p>}
+              <dl className="mt-4 grid grid-cols-3 gap-3 border-t border-line pt-3 text-xs">
+                <div><dt className="text-muted">За период</dt><dd className="tabular-nums">{fmtDelta(growthOf(o, a.accountId))}</dd></div>
+                <div><dt className="text-muted">Просмотры</dt><dd className="tabular-nums">{fmtInt(a.periodViews)}</dd></div>
+                <div><dt className="text-muted">Реакции</dt><dd className="tabular-nums">{fmtInt(a.periodReactions)}</dd></div>
               </dl>
             </article>
           ))}
@@ -86,7 +86,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       <section className="card p-5">
         <div className="mb-2 flex items-baseline justify-between">
           <h2 className="text-sm font-medium">Подписчики — накопленный прирост</h2>
-          <span className="text-xs text-neutral-500">день ко дню за {period} дней</span>
+          <span className="text-xs text-muted">день ко дню за {period} дней</span>
         </div>
         <GrowthChart data={o.growth} series={series} />
       </section>

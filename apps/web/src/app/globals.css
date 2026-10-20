@@ -1,19 +1,60 @@
 @import "tailwindcss";
 
-:root {
-  --bg: #0b0b0c;
-  --fg: #ffffff;
-  --muted: #9ca3af;
-  --card: #141416;
-  --accent: #ff2bd6; /* фуксия из Figma-макета; заменить на точное значение из файла */
-  --threads: #ff8a3d;
-  --instagram: #e1306c;
-  --telegram: #2aabee;
-  --tiktok: #69c9d0;
+/* Semantic tokens. Light is the default; dark via data-theme or (when no attribute) the OS setting. */
+:root,
+:root[data-theme="light"] {
+  --surface: #fcfcfb;
+  --card: #ffffff;
+  --line: #e7e7ea;
+  --fg: #0b0b0c;
+  --muted: #6b7280;
+  --accent: #ff2bd6;
+  --accent-fg: #ffffff;
+  --good: #199e70;
+  --bad: #d95926;
+  color-scheme: light;
 }
 
-html, body {
-  background: var(--bg);
+:root[data-theme="dark"] {
+  --surface: #0b0b0c;
+  --card: #141416;
+  --line: #1f1f23;
+  --fg: #ffffff;
+  --muted: #9ca3af;
+  --accent: #ff2bd6;
+  --accent-fg: #000000;
+  --good: #199e70;
+  --bad: #d95926;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --surface: #0b0b0c;
+    --card: #141416;
+    --line: #1f1f23;
+    --fg: #ffffff;
+    --muted: #9ca3af;
+    --accent-fg: #000000;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-line: var(--line);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-good: var(--good);
+  --color-bad: var(--bad);
+}
+
+html,
+body {
+  background: var(--surface);
   color: var(--fg);
   font-family: ui-sans-serif, system-ui, -apple-system, "Inter", "Segoe UI", Roboto, sans-serif;
 }
@@ -26,7 +67,7 @@ html, body {
   height: 28px;
   border-radius: 6px;
   background: var(--accent);
-  color: #000;
+  color: var(--accent-fg);
   font-weight: 700;
   font-size: 12px;
   letter-spacing: 0.02em;
@@ -34,6 +75,6 @@ html, body {
 
 .card {
   background: var(--card);
-  border: 1px solid #1f1f23;
+  border: 1px solid var(--line);
   border-radius: 14px;
 }
