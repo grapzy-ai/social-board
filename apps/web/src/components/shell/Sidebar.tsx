@@ -29,7 +29,7 @@ export function Sidebar() {
                     </Link>
                   </li>
                 ) : (
-                  <li key={item.href} className="flex items-center justify-between px-2 py-1.5 text-muted/60" aria-disabled>
+                  <li key={item.href} className="flex items-center justify-between px-2 py-1.5 text-muted/60">
                     <span>{item.label}</span>
                     <span className="rounded border border-line px-1 text-[10px] leading-4">скоро</span>
                   </li>
