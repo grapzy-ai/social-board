@@ -1,4 +1,4 @@
-import type { Platform } from "@/lib/db/schema";
+import type { Platform, PostFormat } from "@/lib/db/schema";
 
 /**
  * Categorical palette, fixed order. Validated with dataviz/scripts/validate_palette.js for both surfaces
@@ -40,3 +40,6 @@ export function accountColor(platform: Platform, language: "ru" | "en", indexWit
 
 export const fmtInt = (n: number | null | undefined) => (n === null || n === undefined ? "—" : new Intl.NumberFormat("ru-RU").format(n));
 export const fmtDelta = (n: number | null | undefined) => (n === null || n === undefined ? "—" : `${n > 0 ? "+" : ""}${new Intl.NumberFormat("ru-RU").format(n)}`);
+
+export const FORMAT_TEXT: Record<PostFormat, string> = { reel: "Reels", carousel: "Карусель", image: "Фото", thread: "Thread", tg_post: "TG-пост", short: "Shorts", tiktok: "TikTok" };
+export const FORMAT_GLYPH: Record<PostFormat, string> = { reel: "▶", carousel: "▤", image: "▣", thread: "¶", tg_post: "✈", short: "▶", tiktok: "♪" };
