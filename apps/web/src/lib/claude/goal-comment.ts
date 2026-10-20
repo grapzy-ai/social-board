@@ -1,5 +1,7 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { VADIM_VOICE_SYSTEM } from "./voice";
+import { anthropicClient, claudeModel, type ClientLike } from "./client";
+
+export { anthropicClient, type ClientLike };
 
 export interface GoalCommentInput {
   platform: string;
@@ -12,14 +14,6 @@ export interface GoalCommentInput {
 }
 
 export const GOAL_COMMENT_MAX = 240;
-
-type ClientLike = { messages: { create: (req: Anthropic.MessageCreateParamsNonStreaming) => Promise<{ content: Array<{ type: string; text?: string }> }> } };
-
-let _client: Anthropic | null = null;
-export function anthropicClient(): ClientLike {
-  if (!_client) _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  return _client as unknown as ClientLike;
-}
 
 export function buildGoalPrompt(i: GoalCommentInput): string {
   const needPerDay = i.daysLeft > 0 ? Math.max(0, Math.ceil((i.target - i.followers) / i.daysLeft)) : 0;
@@ -37,7 +31,7 @@ export function buildGoalPrompt(i: GoalCommentInput): string {
 export async function generateGoalComment(input: GoalCommentInput, client: ClientLike = anthropicClient()): Promise<string | null> {
   try {
     const res = await client.messages.create({
-      model: process.env.CLAUDE_MODEL ?? "claude-sonnet-4-5",
+      model: claudeModel(),
       max_tokens: 200,
       system: VADIM_VOICE_SYSTEM,
       messages: [{ role: "user", content: buildGoalPrompt(input) }],

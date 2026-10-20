@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isAllowed } from "@/lib/auth/allowlist";
 
-const PUBLIC_PREFIXES = ["/login", "/api/cron", "/api/health", "/api/auth/callback"];
+const PUBLIC_PREFIXES = ["/login", "/api/cron", "/api/health", "/api/auth/callback", "/api/telegram/webhook"];
 
 /** Local visual harness only (scripts/dev-db.mjs): needs an explicit flag and never applies on Vercel. */
 const DEV_BYPASS = process.env.DEV_BYPASS_AUTH === "1" && !process.env.VERCEL && !process.env.VERCEL_ENV;

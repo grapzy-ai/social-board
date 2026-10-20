@@ -94,3 +94,29 @@ export async function manualMetricsAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/settings/accounts");
 }
+
+/** Points the bot's webhook at this deployment. The secret token is derived from CRON_SECRET (lib/telegram/webhook). */
+export async function connectWebhookAction() {
+  await requireAllowedUser();
+  const { setWebhook } = await import("@/lib/telegram/admin");
+  const { webhookSecret } = await import("@/lib/telegram/webhook");
+  if (!process.env.CRON_SECRET) redirect("/settings/accounts?bot=" + encodeURIComponent("CRON_SECRET не задан — вебхук без секрета не подключаем"));
+  const base = (process.env.APP_BASE_URL ?? "").replace(/\/$/, "");
+  const r = await setWebhook(`${base}/api/telegram/webhook`, webhookSecret());
+  redirect(`/settings/accounts?bot=${r.ok ? "ok" : encodeURIComponent(r.error ?? "error")}`);
+}
+
+/** Checks that the bot is an admin with posting rights in the channel of a telegram account. */
+export async function checkChannelAction(formData: FormData) {
+  await requireAllowedUser();
+  const accountId = z.string().uuid().parse(formData.get("accountId"));
+  const { botId, getChatMember } = await import("@/lib/telegram/admin");
+  const { accounts: accTable } = await import("@/lib/db/schema");
+  const { eq } = await import("drizzle-orm");
+  const [acc] = await getDb().select({ handle: accTable.handle }).from(accTable).where(eq(accTable.id, accountId)).limit(1);
+  const id = botId();
+  if (!acc || id === null) redirect("/settings/accounts?channel=" + encodeURIComponent("нет аккаунта или токена бота"));
+  const m = await getChatMember(`@${acc!.handle}`, id!);
+  const msg = !m ? "канал не найден или бот не в канале" : m.canPost ? `ок — бот админ @${acc!.handle} с правом публикации` : `бот в канале как «${m.status}», права публиковать нет`;
+  redirect("/settings/accounts?channel=" + encodeURIComponent(msg));
+}
