@@ -1,0 +1,4 @@
+{"data": [
+  {"name": "views", "period": "day", "values": [{"value": 300, "end_time": "2026-10-18T07:00:00+0000"}, {"value": 450, "end_time": "2026-10-19T07:00:00+0000"}], "title": "Views", "id": "me/threads_insights/views/day"},
+  {"name": "followers_count", "period": "day", "total_value": {"value": 130}, "title": "Followers", "id": "me/threads_insights/followers_count/day"}
+]}

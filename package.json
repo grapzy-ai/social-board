@@ -1,0 +1,10 @@
+{
+  "name": "social-board",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "test": "pnpm -F web test",
+    "dev": "pnpm -F web dev",
+    "build": "pnpm -F web build"
+  }
+}

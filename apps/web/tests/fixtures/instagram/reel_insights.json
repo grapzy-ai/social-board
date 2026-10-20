@@ -1,0 +1,10 @@
+{"data": [
+  {"name": "views", "period": "lifetime", "values": [{"value": 2090}]},
+  {"name": "reach", "period": "lifetime", "values": [{"value": 1800}]},
+  {"name": "likes", "period": "lifetime", "values": [{"value": 60}]},
+  {"name": "comments", "period": "lifetime", "values": [{"value": 4}]},
+  {"name": "saved", "period": "lifetime", "values": [{"value": 15}]},
+  {"name": "shares", "period": "lifetime", "values": [{"value": 7}]},
+  {"name": "reposts", "period": "lifetime", "values": [{"value": 1}]},
+  {"name": "ig_reels_avg_watch_time", "period": "lifetime", "values": [{"value": 8400}]}
+]}
