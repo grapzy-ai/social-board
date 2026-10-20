@@ -8,7 +8,7 @@ from telethon import TelegramClient
 from telethon.tl.functions.channels import GetFullChannelRequest
 from telethon.tl.functions.stats import GetBroadcastStatsRequest
 
-from .normalize import chisinau_date, day_index, merge_albums, normalize_channel, normalize_message, should_snapshot
+from .normalize import chisinau_date, day_index, merge_albums, needs_snapshot, normalize_channel, normalize_message
 from .sink import Sink
 
 LOOKBACK_DAYS = 90
@@ -58,7 +58,7 @@ async def collect_once(client: TelegramClient, channel: str, account_id: str, si
         if not pid:
             continue
         d = day_index(datetime.fromisoformat(r["published_at"]), now)
-        if should_snapshot(d, existing.get(pid, [])):
+        if needs_snapshot(d, existing.get(pid, [])):
             metrics = {"views": r["views"], "reposts": r["forwards"], "likes": r["reactions"]}
             if sink.write_snapshot(pid, d, metrics, now_iso):
                 snapshots += 1

@@ -72,3 +72,17 @@ def test_album_messages_collapse_into_one_post_keyed_by_first_message():
     assert album["reactions"] == 10
     assert album["permalink"] == "https://t.me/c/100"
     assert album["has_media"] is True
+
+
+def test_first_seen_post_gets_a_snapshot_even_past_its_scheduled_days():
+    from tg.normalize import needs_snapshot
+
+    # Post discovered at day 20: not a scheduled day, but nothing captured yet.
+    assert needs_snapshot(20, []) is True
+    # Once something is captured, the regular schedule applies again.
+    assert needs_snapshot(20, [20]) is False
+    assert needs_snapshot(25, [20]) is False
+    assert needs_snapshot(30, [20]) is True
+    # Scheduled days keep working for fresh posts.
+    assert needs_snapshot(1, []) is True
+    assert needs_snapshot(3, [1]) is True

@@ -29,6 +29,15 @@ def should_snapshot(day_idx: int, existing: list[int]) -> bool:
     return day_idx > 30 and (day_idx - 30) % 7 == 0
 
 
+def needs_snapshot(day_idx: int, existing: list[int]) -> bool:
+    """A post seen for the first time always gets one snapshot, whatever its age — otherwise
+    posts already older than day 11 at first sync would never get any metrics at all.
+    Once something is captured, the regular schedule applies."""
+    if not existing:
+        return True
+    return should_snapshot(day_idx, existing)
+
+
 def _reactions_total(reactions: Any) -> int:
     if not reactions or not getattr(reactions, "results", None):
         return 0
