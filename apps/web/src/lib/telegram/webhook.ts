@@ -1,6 +1,6 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { eq, and } from "drizzle-orm";
-import type { Db } from "@/lib/db/client";
+import type { AnyDb } from "@/lib/db/types";
 import { inboxItems, type InboxKind, type SortTags } from "@/lib/db/schema";
 import { parseUpdate, type CallbackInput, type InboxInput } from "./updates";
 import { reportChatIds, sendMessage, type SendResult, type SendOptions } from "./notify";
@@ -9,7 +9,7 @@ import { describeTags, KIND_LABEL } from "@/lib/ui/factory-labels";
 export type Sorter = (input: { text: string; kind: InboxKind }) => Promise<SortTags>;
 export type Transcriber = (buf: Buffer, filename: string) => Promise<string | null>;
 export type Downloader = (fileId: string) => Promise<{ buf: Buffer; path: string } | null>;
-export type CallbackHandler = (db: Db, cb: CallbackInput) => Promise<void>;
+export type CallbackHandler = (db: AnyDb, cb: CallbackInput) => Promise<void>;
 
 export interface WebhookDeps {
   sort?: Sorter;
@@ -38,9 +38,6 @@ export function isAllowedChat(chatId: string, allow: string[] = reportChatIds())
 
 export type UpdateOutcome = { action: "ignored" | "inserted" | "duplicate" | "callback"; itemId?: string };
 
-/** Any DB type that has the drizzle query surface we use (prod postgres-js or test pglite). */
-type AnyDb = Pick<Db, "insert" | "select" | "update">;
-
 async function findExisting(db: AnyDb, m: InboxInput) {
   const rows = await db
     .select({ id: inboxItems.id })
@@ -57,7 +54,7 @@ export async function handleUpdate(db: AnyDb, update: unknown, deps: WebhookDeps
 
   if ("callback" in parsed) {
     if (!isAllowedChat(parsed.callback.tgChatId)) return { action: "ignored" };
-    if (deps.onCallback) await deps.onCallback(db as Db, parsed.callback);
+    if (deps.onCallback) await deps.onCallback(db, parsed.callback);
     return { action: "callback" };
   }
 
