@@ -27,7 +27,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { href: "/inbox", label: "Входящие", ready: true },
       { href: "/replies", label: "Ответы", ready: false },
       { href: "/signals", label: "Сигналы", ready: false },
-      { href: "/drafts", label: "Черновики", ready: false },
+      { href: "/drafts", label: "Черновики", ready: true },
       { href: "/schedule", label: "Расписание", ready: false },
       { href: "/challenges", label: "Челленджи", ready: false },
     ],

@@ -10,6 +10,6 @@ describe("nav", () => {
   });
   it("exposes exactly the ready routes", () => {
     const ready = NAV_SECTIONS.flatMap((s) => s.items).filter((i) => i.ready).map((i) => i.href);
-    expect(ready).toEqual(["/", "/posts", "/inbox", "/share", "/settings/accounts"]);
+    expect(ready).toEqual(["/", "/posts", "/inbox", "/drafts", "/share", "/settings/accounts"]);
   });
 });
