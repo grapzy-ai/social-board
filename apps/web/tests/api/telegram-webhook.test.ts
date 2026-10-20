@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { makeTestDb, type TestDb } from "../helpers/testdb";
-import { inboxItems } from "@/lib/db/schema";
+import { drafts, inboxItems } from "@/lib/db/schema";
 
 let db: TestDb;
 vi.mock("@/lib/db/client", () => ({ getDb: () => db }));
@@ -101,5 +101,26 @@ describe("POST /api/telegram/webhook", () => {
     const [, text] = sendMock.mock.calls[0] as unknown as [string, string];
     expect(text).toContain("Строю");
     expect(text).toContain("Reels");
+  });
+
+  it("handles a callback from an allowed chat and answers it", async () => {
+    const [d] = await db.insert(drafts).values({ type: "threads", title: "t", body: { text: "x" }, status: "ready" }).returning();
+    const answer = vi.fn(async () => true);
+    const edit = vi.fn(async () => true);
+    const out = await handleUpdate(db, { callback_query: { id: "cq1", data: `approve:${d.id}`, message: { message_id: 9, chat: { id: 5 } } } }, { answer, edit, send: sendMock as never });
+    expect(out.action).toBe("callback");
+    expect(answer).toHaveBeenCalledWith("cq1", expect.any(String));
+    const [row] = await db.select().from(drafts);
+    expect(row.status).toBe("approved");
+  });
+
+  it("ignores callbacks from other chats", async () => {
+    const [d] = await db.insert(drafts).values({ type: "threads", title: "t", body: { text: "x" }, status: "ready" }).returning();
+    const answer = vi.fn(async () => true);
+    const out = await handleUpdate(db, { callback_query: { id: "cq2", data: `approve:${d.id}`, message: { message_id: 9, chat: { id: 777 } } } }, { answer, send: sendMock as never });
+    expect(out.action).toBe("ignored");
+    expect(answer).not.toHaveBeenCalled();
+    const [row] = await db.select().from(drafts);
+    expect(row.status).toBe("ready");
   });
 });

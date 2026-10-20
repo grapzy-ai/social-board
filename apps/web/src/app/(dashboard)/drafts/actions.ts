@@ -12,6 +12,7 @@ import { createDraftsFromPackage } from "@/lib/drafts/create";
 import { bodyFromForm, canTransition } from "@/lib/drafts/status";
 import { getInboxItem } from "@/lib/queries/inbox";
 import { notifyAll } from "@/lib/telegram/notify";
+import { sendApprovalCard } from "@/lib/drafts/approval";
 
 const base = () => (process.env.APP_BASE_URL ?? "").replace(/\/$/, "");
 
@@ -67,7 +68,7 @@ export async function saveDraftAction(formData: FormData) {
 
 const StatusSchema = z.object({ id: z.string().uuid(), status: z.enum(DRAFT_STATUSES) });
 
-/** Guarded transition through the editorial state machine. */
+/** Guarded transition through the editorial state machine; `ready` sends the approval card to the bot. */
 export async function setDraftStatusAction(formData: FormData) {
   await requireAllowedUser();
   const { id, status } = StatusSchema.parse({ id: formData.get("id"), status: formData.get("status") });
@@ -77,6 +78,7 @@ export async function setDraftStatusAction(formData: FormData) {
   const patch: Partial<typeof drafts.$inferInsert> = { status: status as DraftStatus, updatedAt: new Date() };
   if (status === "approved") patch.approvedAt = new Date();
   await db.update(drafts).set(patch).where(and(eq(drafts.id, id), eq(drafts.status, d.status)));
+  if (status === "ready") await sendApprovalCard({ ...d, status: "ready" });
   revalidatePath(`/drafts/${id}`);
   revalidatePath("/drafts");
 }
