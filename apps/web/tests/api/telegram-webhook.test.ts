@@ -11,7 +11,7 @@ vi.mock("@/lib/telegram/notify", async (orig) => {
 });
 
 import { POST } from "@/app/api/telegram/webhook/route";
-import { webhookSecret } from "@/lib/telegram/webhook";
+import { handleUpdate, webhookSecret } from "@/lib/telegram/webhook";
 
 const post = (body: unknown, secret?: string) =>
   POST(
@@ -65,5 +65,28 @@ describe("POST /api/telegram/webhook", () => {
     expect(await res.json()).toMatchObject({ ok: true, action: "duplicate" });
     expect(await db.select().from(inboxItems)).toHaveLength(1);
     expect(sendMock).toHaveBeenCalledTimes(1);
+  });
+
+  const voiceUpdate = { update_id: 11, message: { message_id: 11, chat: { id: 5 }, voice: { file_id: "F1", duration: 4 } } };
+  const download = async () => ({ buf: Buffer.from("ogg"), path: "voice/f1.oga" });
+
+  it("stores voice with transcript when a transcriber is injected", async () => {
+    const out = await handleUpdate(db, voiceUpdate, { download, transcribe: async () => "расшифровка голосового", send: sendMock as never });
+    expect(out.action).toBe("inserted");
+    const [row] = await db.select().from(inboxItems);
+    expect(row.kind).toBe("voice");
+    expect(row.transcript).toBe("расшифровка голосового");
+    const [, text] = sendMock.mock.calls[0] as unknown as [string, string];
+    expect(text).toContain("📝 расшифровка голосового");
+  });
+
+  it("stores voice with null transcript when transcription is unavailable", async () => {
+    const out = await handleUpdate(db, voiceUpdate, { download, transcribe: async () => null, send: sendMock as never });
+    expect(out.action).toBe("inserted");
+    const [row] = await db.select().from(inboxItems);
+    expect(row.transcript).toBeNull();
+    expect(row.status).toBe("new");
+    const [, text] = sendMock.mock.calls[0] as unknown as [string, string];
+    expect(text).toContain("ждёт расшифровки");
   });
 });
