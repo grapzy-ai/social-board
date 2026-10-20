@@ -237,7 +237,8 @@ export type DraftType = (typeof DRAFT_TYPES)[number];
 export const DRAFT_STATUSES = ["idea", "draft", "ready", "approved", "scheduled", "published", "rejected"] as const;
 export type DraftStatus = (typeof DRAFT_STATUSES)[number];
 
-export type DraftBody = { text: string } | { script: string; hooks: string[]; cover: string } | { slides: string[]; caption: string };
+export type ReelBody = { script: string; hooks: string[]; cover: string; angle?: string; hookMechanic?: string; funnel?: string };
+export type DraftBody = { text: string } | ReelBody | { slides: string[]; caption: string };
 
 export const inboxItems = pgTable(
   "inbox_items",
